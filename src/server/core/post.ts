@@ -38,6 +38,18 @@ export const createDailyPost = async () => {
   return post;
 };
 
+/**
+ * The daily post id for background/scheduler use (last post the app created).
+ */
 export const getDailyPostId = async (): Promise<string | null> => {
   return (await redis.get(REDIS.dailyPostId)) ?? context.postId ?? null;
+};
+
+/**
+ * The post a player action should target: the post they are actually viewing.
+ * Falls back to the stored daily post only when context has no post (e.g.
+ * scheduler-driven flows).
+ */
+export const getActivePostId = async (): Promise<string | null> => {
+  return context.postId ?? (await redis.get(REDIS.dailyPostId)) ?? null;
 };

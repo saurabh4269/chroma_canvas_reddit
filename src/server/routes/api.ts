@@ -39,7 +39,7 @@ import {
   recordDailyWin,
 } from '../core/leaderboard';
 import { applyFlair, getPlayerStats, recordDeath, recordWin } from '../core/players';
-import { getDailyPostId } from '../core/post';
+import { getActivePostId } from '../core/post';
 
 export const api = new Hono();
 
@@ -265,7 +265,7 @@ api.post('/subscribe', async (c) => {
 
 api.post('/comment-death', async (c) => {
   const username = (await reddit.getCurrentUsername()) ?? 'anonymous';
-  const postId = (await getDailyPostId()) ?? context.postId;
+  const postId = await getActivePostId();
   if (!postId) {
     return c.json<CommentActionResponse>(
       { type: 'comment', status: 'error', message: 'No post to comment on' },
@@ -302,7 +302,7 @@ api.post('/comment-death', async (c) => {
 api.post('/comment-hazard', async (c) => {
   const username = (await reddit.getCurrentUsername()) ?? 'anonymous';
   const body = await c.req.json<CommentHazardRequest>();
-  const postId = (await getDailyPostId()) ?? context.postId;
+  const postId = await getActivePostId();
   if (!postId) {
     return c.json<CommentActionResponse>(
       { type: 'comment', status: 'error', message: 'No post to comment on' },

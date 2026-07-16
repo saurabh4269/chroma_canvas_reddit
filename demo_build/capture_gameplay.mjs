@@ -112,9 +112,10 @@ const scriptedRun = async (page) => {
 
     const platforms = [...scene.level.platforms].sort((a, b) => a.x - b.x);
     const start = performance.now();
-    const RUN_MS = 26000;
+    const RUN_MS = 28000;
     let pauseUntil = 0;
     let lingerCount = 0;
+    let lastSafe = platforms[0];
 
     const currentPlatform = (px) => {
       for (const p of platforms) {
@@ -146,20 +147,34 @@ const scriptedRun = async (page) => {
 
         const now = performance.now();
         const px = scene.player.x;
+        const py = scene.player.y;
         const onGround = body.blocked.down || body.touching.down;
         const cur = currentPlatform(px);
         const nxt = nextPlatform(px);
+        if (cur) lastSafe = cur;
+
+        // Demo recovery: never waste the climb on an early pit fall
+        if (!scene.dead && py > scene.level.height - 40 && lastSafe) {
+          const rx = lastSafe.x + lastSafe.w * 0.35;
+          const ry = lastSafe.y - 28;
+          scene.player.setPosition(rx, ry);
+          body.reset(rx, ry);
+          body.setVelocity(0, 0);
+        }
 
         // Linger briefly on early corpse platforms so labels read on camera
         if (
           onGround &&
-          lingerCount < 3 &&
+          lingerCount < 4 &&
           cur &&
           now > pauseUntil &&
-          (Math.abs(px - 340) < 30 || Math.abs(px - 560) < 30 || Math.abs(px - 760) < 30)
+          (Math.abs(px - 340) < 36 ||
+            Math.abs(px - 560) < 36 ||
+            Math.abs(px - 760) < 36 ||
+            Math.abs(px - 960) < 36)
         ) {
           lingerCount += 1;
-          pauseUntil = now + 700;
+          pauseUntil = now + 650;
           scene.setTouchInput(false, false, false);
           requestAnimationFrame(step);
           return;
@@ -171,8 +186,8 @@ const scriptedRun = async (page) => {
           return;
         }
 
-        // After a full climb past corpses, walk into the second spike (~1900)
-        if (performance.now() - start > 20000 || px > 1850) {
+        // After a full climb past corpses, walk into the community spike (~1920)
+        if (performance.now() - start > 21000 || px > 1880) {
           scene.setTouchInput(false, true, false);
           requestAnimationFrame(step);
           return;
@@ -182,7 +197,8 @@ const scriptedRun = async (page) => {
         if (onGround && cur && nxt) {
           const distToEdge = cur.x + cur.w - px;
           const needUp = nxt.y < cur.y - 8;
-          if (distToEdge < 55 || needUp) jump = true;
+          // Jump earlier — low-grav / gaps are unforgiving if we wait at the lip
+          if (distToEdge < 72 || needUp) jump = true;
         } else if (onGround && !nxt) {
           jump = true;
         }

@@ -5,7 +5,7 @@ export const HEIGHT = 1080;
 
 /** Continuous headed Playwright capture (Phaser CANVAS / capture=1). */
 export const GAMEPLAY_VIDEO = 'video/gameplay.mp4';
-export const GAMEPLAY_VIDEO_SECONDS = 25.266667;
+export const GAMEPLAY_VIDEO_SECONDS = 34.67;
 
 /**
  * Video-first arc for Games with a Hook:

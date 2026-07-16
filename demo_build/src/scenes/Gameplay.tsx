@@ -7,28 +7,28 @@ import {GAMEPLAY_VIDEO, FPS} from '../storyboard';
 
 const OVERLAYS = [
   {
-    start: 1.6,
-    end: 4.4,
+    start: 1.4,
+    end: 4.6,
     title: 'Daily Level #42',
     sub: '127 have fallen · Chromatic streak',
   },
   {
-    start: 5.0,
-    end: 10.8,
+    start: 5.5,
+    end: 14.0,
     title: 'Corpses are platforms',
     sub: 'Climb the community that failed before you',
   },
   {
-    start: 12.2,
-    end: 16.8,
-    title: 'Petrified → Comment My Death',
-    sub: 'Your fall becomes someone else\'s foothold',
+    start: 16.5,
+    end: 23.5,
+    title: 'Petrified → shape tomorrow',
+    sub: 'Comment My Death · !hazard spikes for the next climbers',
   },
   {
-    start: 18.4,
-    end: 22.6,
+    start: 26.0,
+    end: 33.5,
     title: 'Orb delivered',
-    sub: 'Beat the daily · climb the leaderboard',
+    sub: 'Beat the daily · claim Orb Bearer ✦',
   },
 ] as const;
 

@@ -121,6 +121,7 @@ const buildDemoLevel = () => {
     height: LEVEL_HEIGHT,
     spawn: { x: 80, y: groundY - 60 },
     exit: { x: exitX, y: exitY },
+    blessing: 'mercy',
     platforms,
     hazards: [
       // Visible mid-run hazard (moving) — spike waits for the death beat near the end
@@ -137,10 +138,10 @@ const corpses = [
   { u: 'pixel_pilot', x: 340, y: level.platforms[1].y - 8, t: Date.now() - 86400000 },
   { u: 'orb_runner', x: 560, y: level.platforms[2].y - 8, t: Date.now() - 7200000 },
   { u: 'chroma_climber', x: 760, y: level.platforms[3].y - 8, t: Date.now() - 3600000 },
-  { u: 'snoo_jumper', x: 960, y: level.platforms[4].y - 8, t: Date.now() - 1800000 },
-  { u: 'reddit_hero', x: 1180, y: level.platforms[5].y - 8, t: Date.now() - 900000 },
-  { u: 'daily_grind', x: 1400, y: level.platforms[6].y - 8, t: Date.now() - 600000 },
-  { u: 'saurabh42', x: 420, y: level.platforms[1].y - 8, t: Date.now() - 300000 },
+  { u: 'snoo_jumper', x: 960, y: level.platforms[4].y - 8, t: Date.now() - 1800000, s: '/snoo.png' },
+  { u: 'reddit_hero', x: 1180, y: level.platforms[5].y - 8, t: Date.now() - 900000, s: '/snoo.png' },
+  { u: 'daily_grind', x: 1400, y: level.platforms[6].y - 8, t: Date.now() - 600000, s: '/snoo.png' },
+  { u: 'saurabh42', x: 420, y: level.platforms[1].y - 8, t: Date.now() - 300000, s: '/snoo.png' },
 ];
 
 const initPayload = {
@@ -172,6 +173,14 @@ const initPayload = {
   ],
   subscribed: false,
   serverNow: Date.now(),
+  snoovatarUrl: '/snoo.png',
+  dailyPulse: { wins: 4, deaths: 47 },
+  pendingHazards: [
+    { type: 'spike', x: 1200, y: 400 },
+    { type: 'crumble', x: 900, y: 300 },
+    { type: 'gap', x: 1500, y: 430 },
+  ],
+  nextRotationAt: Date.now() + 5.5 * 3600 * 1000 + 42_000,
 };
 
 const MIME = {
@@ -245,6 +254,55 @@ const server = createServer(async (req, res) => {
   }
   if (url.pathname === '/api/comment-death' && req.method === 'POST') {
     json(res, 200, { type: 'comment', status: 'ok', message: 'Death comment posted' });
+    return;
+  }
+  if (url.pathname === '/api/history') {
+    const day = (offset, seq) => {
+      const gen = generateLevel(`2026-07-${16 - offset}`, seq);
+      const rnd = mulberry32(seq * 7919);
+      const corpses = Array.from({ length: 40 + Math.floor(rnd() * 160) }, () => {
+        const p = gen.platforms[Math.floor(rnd() * gen.platforms.length)];
+        return { x: p.x + rnd() * p.w, y: p.y - 8 };
+      });
+      return {
+        date: gen.date,
+        seq,
+        width: gen.width,
+        height: gen.height,
+        platforms: gen.platforms,
+        exit: gen.exit,
+        corpses,
+        corpseCount: corpses.length,
+      };
+    };
+    json(res, 200, {
+      type: 'history',
+      entries: [
+        {
+          date: DEMO_DATE,
+          seq: DEMO_SEQ,
+          width: level.width,
+          height: level.height,
+          platforms: level.platforms,
+          exit: level.exit,
+          corpses: corpses.map((c) => ({ x: c.x, y: c.y })),
+          corpseCount: 127,
+          live: true,
+        },
+        day(1, 41),
+        day(2, 40),
+        day(3, 39),
+        day(4, 38),
+      ],
+    });
+    return;
+  }
+  if (url.pathname === '/api/comment-hazard' && req.method === 'POST') {
+    json(res, 200, {
+      type: 'comment',
+      status: 'ok',
+      message: 'Hazard suggested! Upvotes decide tomorrow.',
+    });
     return;
   }
   if (url.pathname === '/health') {

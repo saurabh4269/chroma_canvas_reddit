@@ -19,6 +19,7 @@
   },
   "permissions": {
     "journeys": true,
+    "realtime": true,
     "redis": true,
     "reddit": {
       "enable": true,

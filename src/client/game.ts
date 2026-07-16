@@ -1,3 +1,4 @@
+import { Archive } from './scenes/Archive';
 import { Boot } from './scenes/Boot';
 import { GameOver } from './scenes/GameOver';
 import { Game as MainGame } from './scenes/Game';
@@ -27,7 +28,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [Boot, Preloader, MainMenu, MainGame, UIScene, GameOver],
+  scene: [Boot, Preloader, MainMenu, MainGame, UIScene, GameOver, Archive],
 };
 
 const StartGame = (parent: string) => {
@@ -42,6 +43,27 @@ declare global {
   }
 }
 
+/**
+ * Canvas text never triggers webfont downloads, so explicitly load the
+ * display faces (with a timeout guard) before booting Phaser.
+ */
+async function loadFonts(): Promise<void> {
+  if (!('fonts' in document)) return;
+  const wanted = [
+    '600 32px Fredoka',
+    '700 32px Fredoka',
+    '600 16px Nunito',
+    '700 16px Nunito',
+    '800 16px Nunito',
+  ];
+  await Promise.race([
+    Promise.all(wanted.map((f) => document.fonts.load(f))),
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ]).catch(() => {});
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  StartGame('game-container');
+  void loadFonts().then(() => {
+    StartGame('game-container');
+  });
 });

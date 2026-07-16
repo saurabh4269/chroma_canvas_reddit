@@ -1,4 +1,12 @@
-import type { CorpseRecord, LeaderboardEntry, LevelDef, PlayerStats } from './level';
+import type {
+  ArchiveEntry,
+  CorpseRecord,
+  DailyPulse,
+  HazardSpec,
+  LeaderboardEntry,
+  LevelDef,
+  PlayerStats,
+} from './level';
 
 export type InitResponse = {
   type: 'init';
@@ -12,6 +20,19 @@ export type InitResponse = {
   alltimeLeaderboard: LeaderboardEntry[];
   subscribed: boolean;
   serverNow: number;
+  /** Current user's snoovatar image URL (null when unavailable). */
+  snoovatarUrl: string | null;
+  /** Community !hazard suggestions queued for tomorrow's level. */
+  pendingHazards: HazardSpec[];
+  /** Epoch ms of the next level rotation (12:00 UTC). */
+  nextRotationAt: number;
+  /** Today's community tug-of-war: orb deliveries vs. petrifications. */
+  dailyPulse: DailyPulse;
+};
+
+export type HistoryResponse = {
+  type: 'history';
+  entries: ArchiveEntry[];
 };
 
 export type LevelResponse = {
@@ -60,6 +81,17 @@ export type SubscribeResponse = {
   status: 'ok' | 'error';
   message: string;
 };
+
+export type CommentHazardRequest = {
+  hazardType: string;
+  x: number;
+  y: number;
+};
+
+/** Realtime messages broadcast on the `cc_live` channel. */
+export type LiveEvent =
+  | { kind: 'death'; u: string; x: number; y: number; seq: number; s?: string }
+  | { kind: 'win'; u: string; elapsedMs: number; seq: number };
 
 export type CommentActionResponse = {
   type: 'comment';

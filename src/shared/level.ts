@@ -26,6 +26,31 @@ export type LevelDef = {
   platforms: Platform[];
   hazards: HazardSpec[];
   seed: number;
+  /**
+   * Yesterday's collective fate, baked into today's terrain:
+   * 'mercy' — the fallen outnumbered victors; a Mercy Ledge was granted.
+   * 'cruel' — too many victories; the canvas grew crueler.
+   */
+  blessing?: 'mercy' | 'cruel';
+};
+
+/** A day's win/death pulse — the community tug-of-war. */
+export type DailyPulse = {
+  wins: number;
+  deaths: number;
+};
+
+/** Archived day for The Archive gallery. */
+export type ArchiveEntry = {
+  date: string;
+  seq: number;
+  width: number;
+  height: number;
+  platforms: Platform[];
+  exit: { x: number; y: number };
+  corpses: Array<{ x: number; y: number }>;
+  corpseCount: number;
+  live?: boolean;
 };
 
 export type CorpseRecord = {
@@ -33,6 +58,8 @@ export type CorpseRecord = {
   x: number;
   y: number;
   t: number;
+  /** Snoovatar URL captured at death time (optional; older corpses lack it). */
+  s?: string;
 };
 
 export type PlayerStats = {

@@ -31,6 +31,15 @@ export const parseHazardComment = (text: string): HazardSpec | null => {
   };
 };
 
+/** Hazards currently queued for tomorrow (most recent first, capped). */
+export const getPendingHazards = async (limit = 10): Promise<HazardSpec[]> => {
+  const pending = await redis.zRange(REDIS.commentsPending, 0, -1);
+  return pending
+    .map((m) => (JSON.parse(m.member) as PendingHazard).hazard)
+    .slice(-limit)
+    .reverse();
+};
+
 export const isCommentProcessed = async (commentId: string): Promise<boolean> => {
   const score = await redis.zScore(REDIS.commentsProcessed, commentId);
   return score !== undefined;

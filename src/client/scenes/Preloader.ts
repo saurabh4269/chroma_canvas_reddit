@@ -1,54 +1,73 @@
 import { Scene } from 'phaser';
+import type { GameObjects } from 'phaser';
+import type { InitResponse } from '../../shared/api';
 import { fetchInit } from '../net/api';
 import { reportAppReady } from '../journeys';
 import { FONTS, HEX, COLORS } from '../theme';
 import { generateGameTextures } from '../ui/textures';
-import { drawSunnyBackdrop } from '../ui/phaserUi';
+import { addDisplayTitle, drawSunnyBackdrop, floatBob } from '../ui/phaserUi';
 
 export class Preloader extends Scene {
   private initReady!: Promise<void>;
+  private barFill!: GameObjects.Graphics;
+  private barW = 260;
 
   constructor() {
     super('Preloader');
   }
 
   init() {
+    // Textures must exist before we draw the scene with them
+    generateGameTextures(this);
+
     const { width, height } = this.scale;
     drawSunnyBackdrop(this, width, height);
 
-    this.add
-      .text(width / 2, height * 0.32, 'Chroma Canvas', {
-        fontFamily: FONTS.display,
-        fontSize: '44px',
-        color: HEX.ink,
-        stroke: HEX.sunSoft,
-        strokeThickness: 8,
-      })
-      .setOrigin(0.5);
+    const orb = this.add
+      .image(width / 2, height * 0.3, 'cc-orb')
+      .setScale(1.6);
+    floatBob(this, orb, 7);
+
+    addDisplayTitle(this, width / 2, height * 0.44, 'Chroma Canvas', 46);
 
     this.add
-      .text(width / 2, height * 0.42, 'Warming the canvas…', {
+      .text(width / 2, height * 0.53, 'Warming the canvas…', {
         fontFamily: FONTS.body,
         fontSize: '16px',
-        color: HEX.inkSoft,
+        fontStyle: '700',
+        color: HEX.ink,
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setAlpha(0.8);
 
-    this.add
-      .rectangle(width / 2, height * 0.58, 280, 18, COLORS.cream, 0.9)
-      .setStrokeStyle(2, COLORS.sunSoft);
+    // Progress track + rounded fill
+    const barX = width / 2 - this.barW / 2;
+    const barY = height * 0.62;
+    const track = this.add.graphics();
+    track.fillStyle(COLORS.ink, 0.14);
+    track.fillRoundedRect(barX + 2, barY + 3, this.barW, 16, 8);
+    track.fillStyle(COLORS.cream, 0.95);
+    track.fillRoundedRect(barX, barY, this.barW, 16, 8);
+    track.lineStyle(2, COLORS.sun, 0.6);
+    track.strokeRoundedRect(barX, barY, this.barW, 16, 8);
 
-    const bar = this.add
-      .rectangle(width / 2 - 138, height * 0.58, 4, 12, COLORS.coral)
-      .setOrigin(0, 0.5);
+    this.barFill = this.add.graphics();
+    const drawFill = (p: number) => {
+      this.barFill.clear();
+      const wFill = Math.max(12, this.barW * p - 6);
+      this.barFill.fillStyle(COLORS.coral, 1);
+      this.barFill.fillRoundedRect(barX + 3, barY + 3, wFill, 10, 5);
+      this.barFill.fillStyle(0xffffff, 0.35);
+      this.barFill.fillRoundedRect(barX + 5, barY + 4, Math.max(6, wFill - 4), 3, 1.5);
+    };
+    drawFill(0.06);
 
-    this.load.on('progress', (p: number) => {
-      bar.width = 4 + 268 * p;
-    });
+    this.load.on('progress', (p: number) => drawFill(Math.max(0.06, p)));
 
     this.initReady = fetchInit()
       .then((data) => {
         this.registry.set('init', data);
+        this.registry.set('initAt', Date.now());
         this.registry.set('initError', null);
       })
       .catch((err) => {
@@ -63,13 +82,61 @@ export class Preloader extends Scene {
   preload() {
     this.load.setPath('assets');
     this.load.image('logo', 'logo.png');
-    generateGameTextures(this);
   }
 
   create() {
-    void this.initReady.then(() => {
-      reportAppReady();
-      this.scene.start('MainMenu');
+    void this.initReady
+      .then(() => this.loadSnoovatars())
+      .then(() => {
+        reportAppReady();
+        this.scene.start('MainMenu');
+      });
+  }
+
+  /**
+   * Second-phase loader: the player's snoovatar + the most recent petrified
+   * snoovatars. Never blocks the game — resolves on completion, error, or a
+   * 2.5s timeout, and the world falls back to procedural sprites per-texture.
+   */
+  private loadSnoovatars(): Promise<void> {
+    return new Promise((resolve) => {
+      const init = this.registry.get('init') as InitResponse | undefined;
+      const keyByUrl = new Map<string, string>();
+      const jobs: Array<[string, string]> = [];
+
+      if (init?.snoovatarUrl) {
+        jobs.push(['snoo-self', init.snoovatarUrl]);
+      }
+      for (const c of (init?.corpses ?? []).filter((c) => c.s).slice(-10)) {
+        const url = c.s!;
+        if (!keyByUrl.has(url)) {
+          const key = `snoo-c-${keyByUrl.size}`;
+          keyByUrl.set(url, key);
+          jobs.push([key, url]);
+        }
+      }
+      this.registry.set('snooKeys', Object.fromEntries(keyByUrl));
+
+      if (jobs.length === 0) {
+        resolve();
+        return;
+      }
+
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+
+      this.load.setPath(''); // preload() set 'assets'; snoovatar URLs are absolute
+      this.load.crossOrigin = 'anonymous';
+      for (const [key, url] of jobs) {
+        this.load.image(key, url);
+      }
+      this.load.once('complete', done);
+      this.time.delayedCall(2500, done);
+      this.load.start();
     });
   }
 }

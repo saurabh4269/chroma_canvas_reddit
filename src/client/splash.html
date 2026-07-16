@@ -4,7 +4,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" type="text/css" href="splash.css" />
@@ -17,13 +17,46 @@
   </head>
   <body class="app">
     <div class="sky" aria-hidden="true">
-      <div class="sun"></div>
-      <div class="hill hill-a"></div>
-      <div class="hill hill-b"></div>
+      <div class="sun"><div class="sun-rays"></div><div class="sun-core"></div></div>
+      <div class="cloud cloud-a"></div>
+      <div class="cloud cloud-b"></div>
+      <div class="cloud cloud-c"></div>
       <div class="orb-float"></div>
+      <svg class="hills hills-far" viewBox="0 0 800 200" preserveAspectRatio="none">
+        <path
+          d="M0,200 L0,120 Q100,52 210,110 Q290,150 380,96 Q470,44 570,104 Q680,160 800,92 L800,200 Z"
+          fill="#8fc9ee"
+        />
+      </svg>
+      <svg class="hills hills-mid" viewBox="0 0 800 200" preserveAspectRatio="none">
+        <path
+          d="M0,200 L0,138 Q120,70 250,124 Q360,168 480,110 Q600,56 720,122 Q760,142 800,128 L800,200 Z"
+          fill="#7fd0a0"
+        />
+        <g fill="#5fbb85">
+          <path d="M120,120 l14,26 h-28 Z" />
+          <rect x="117" y="144" width="6" height="10" rx="2" />
+          <path d="M540,104 l13,24 h-26 Z" />
+          <rect x="537" y="126" width="6" height="9" rx="2" />
+        </g>
+      </svg>
+      <svg class="hills hills-near" viewBox="0 0 800 160" preserveAspectRatio="none">
+        <path
+          d="M0,160 L0,96 Q140,32 300,84 Q440,128 580,76 Q690,38 800,86 L800,160 Z"
+          fill="#63c47a"
+        />
+        <g fill="#47a962">
+          <circle cx="200" cy="96" r="16" /><circle cx="219" cy="102" r="11" /><circle cx="184" cy="103" r="10" />
+          <circle cx="640" cy="84" r="14" /><circle cx="656" cy="90" r="10" />
+        </g>
+      </svg>
     </div>
+
     <div class="stage">
-      <img class="snoo" src="snoo.png" alt="" />
+      <div class="hero">
+        <img class="snoo" src="snoo.png" alt="" />
+        <div class="hero-shadow"></div>
+      </div>
       <div class="content">
         <p class="eyebrow">Daily climb</p>
         <h1 class="title" id="title">Chroma Canvas</h1>
@@ -32,8 +65,12 @@
         </p>
         <p class="level-info" id="level-info"></p>
       </div>
-      <button class="start-button" id="start-button" type="button">Play</button>
+      <button class="start-button" id="start-button" type="button">
+        Play
+        <span class="start-button-arrow">▶</span>
+      </button>
     </div>
+
     <footer class="footer">
       <span>!hazard comments shape tomorrow</span>
     </footer>

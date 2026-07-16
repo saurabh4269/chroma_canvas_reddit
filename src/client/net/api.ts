@@ -1,7 +1,9 @@
 import type {
   CommentActionResponse,
+  CommentHazardRequest,
   DeathRequest,
   DeathResponse,
+  HistoryResponse,
   InitResponse,
   SubscribeResponse,
   WinRequest,
@@ -15,6 +17,9 @@ const parseJson = async <T>(res: Response): Promise<T> => {
 
 export const fetchInit = (): Promise<InitResponse> =>
   fetch('/api/init').then((r) => parseJson<InitResponse>(r));
+
+export const fetchHistory = (): Promise<HistoryResponse> =>
+  fetch('/api/history').then((r) => parseJson<HistoryResponse>(r));
 
 export const postDeath = (body: DeathRequest): Promise<DeathResponse> =>
   fetch('/api/death', {
@@ -39,3 +44,12 @@ export const postCommentDeath = (): Promise<CommentActionResponse> =>
   fetch('/api/comment-death', { method: 'POST' }).then((r) =>
     parseJson<CommentActionResponse>(r)
   );
+
+export const postCommentHazard = (
+  body: CommentHazardRequest
+): Promise<CommentActionResponse> =>
+  fetch('/api/comment-hazard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then((r) => parseJson<CommentActionResponse>(r));

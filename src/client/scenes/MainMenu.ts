@@ -1,4 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
+import * as Phaser from 'phaser';
 import type { InitResponse } from '../../shared/api';
 import { getDailyTwist } from '../../shared/twist';
 import { reportJourneyStart } from '../journeys';
@@ -48,9 +49,21 @@ export class MainMenu extends Scene {
     this.scale.on('resize', onResize);
     this.events.once('shutdown', () => this.scale.off('resize', onResize));
 
-    this.input.once('pointerdown', () => {
+    // Whole-screen start, but never steal clicks from Archive / CTA / tips
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.starting) return;
+      const hits = this.input.hitTestPointer(pointer);
+      if (hits.length > 0) return;
       void this.onPointer();
     });
+
+    const captureMode =
+      typeof window !== 'undefined' && window.location.search.includes('capture=1');
+    if (captureMode) {
+      this.registry.set('sessionTipsSeen', true);
+    } else if (!this.registry.get('sessionTipsSeen')) {
+      this.showSessionTips();
+    }
   }
 
   private build() {
@@ -344,7 +357,10 @@ export class MainMenu extends Scene {
       this.card.setPosition(width / 2, height * 0.645).setScale(cardScale * 0.92);
       this.subtitle.setPosition(width / 2, height * 0.645).setScale(cardScale * 0.92);
       this.cta.container.setPosition(width / 2, height * 0.845).setScale(s * 0.9);
-      this.archiveBtn.container.setVisible(false);
+      this.archiveBtn.container
+        .setVisible(true)
+        .setPosition(Math.min(92, width * 0.22), 28)
+        .setScale(Math.min(s, 0.9));
     } else {
       this.eyebrow.setPosition(width / 2, height * 0.238).setScale(s * 0.95);
       this.title.setPosition(width / 2, height * 0.29).setScale(s * 0.95);
@@ -364,8 +380,67 @@ export class MainMenu extends Scene {
     this.footer.setPosition(width / 2, height - 14).setScale(Math.min(s, 1));
   }
 
+  /** Soft every-session tip card — no localStorage (Devvit webview). */
+  private showSessionTips() {
+    const { width, height } = this.scale;
+    const dim = this.add
+      .rectangle(width / 2, height / 2, width + 40, height + 40, COLORS.ink, 0.42)
+      .setInteractive()
+      .setDepth(300);
+    const card = addCard(this, width / 2, height / 2, Math.min(width - 36, 360), 228, 20);
+    card.setDepth(301);
+    const title = this.add
+      .text(width / 2, height / 2 - 78, 'Quick climb tips', {
+        fontFamily: FONTS.display,
+        fontSize: '22px',
+        fontStyle: '600',
+        color: HEX.ink,
+      })
+      .setOrigin(0.5)
+      .setDepth(302);
+    const body = this.add
+      .text(
+        width / 2,
+        height / 2 - 8,
+        [
+          '1. Carry the aqua orb to the GOAL portal',
+          '2. Die → your corpse becomes a platform',
+          '3. Comment !hazard to shape tomorrow',
+        ].join('\n'),
+        {
+          fontFamily: FONTS.body,
+          fontSize: '15px',
+          fontStyle: '700',
+          color: HEX.ink,
+          align: 'left',
+          lineSpacing: 10,
+        }
+      )
+      .setOrigin(0.5)
+      .setDepth(302);
+    const dismiss = addGameButton(
+      this,
+      width / 2,
+      height / 2 + 78,
+      'Got it',
+      'coral',
+      () => {
+        this.registry.set('sessionTipsSeen', true);
+        dim.destroy();
+        card.destroy();
+        title.destroy();
+        body.destroy();
+        dismiss.container.destroy();
+      },
+      160,
+      44
+    );
+    dismiss.container.setDepth(302);
+  }
+
   private async onPointer(): Promise<void> {
     if (this.starting) return;
+    if (!this.registry.get('sessionTipsSeen')) return;
     this.starting = true;
 
     let init = this.registry.get('init') as InitResponse | undefined;
@@ -382,9 +457,6 @@ export class MainMenu extends Scene {
         );
         this.refreshCopy();
         this.starting = false;
-        this.input.once('pointerdown', () => {
-          void this.onPointer();
-        });
         return;
       }
     }

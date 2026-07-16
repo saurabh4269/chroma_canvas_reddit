@@ -1,6 +1,11 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
-import { postCommentHazard, postSubscribe, fetchInit } from '../net/api';
+import {
+  postCommentDeath,
+  postCommentHazard,
+  postSubscribe,
+  fetchInit,
+} from '../net/api';
 import {
   reportJourneyEnd,
   reportJourneyInteraction,
@@ -120,6 +125,27 @@ export class GameOver extends Scene {
     y += gap;
 
     if (!won) {
+      const deathBtn = addGameButton(
+        this,
+        width / 2,
+        y,
+        '💬 Comment My Death',
+        'sky',
+        async () => {
+          reportJourneyInteraction('comment_death');
+          deathBtn.setLabel('Posting…');
+          try {
+            const res = await postCommentDeath();
+            this.showToast(res.message);
+            deathBtn.setLabel('Commented ✓');
+          } catch {
+            this.showToast('Comment failed');
+            deathBtn.setLabel('💬 Comment My Death');
+          }
+        }
+      );
+      y += gap;
+
       // Turn your death into tomorrow's trap: posts a prefilled !hazard comment
       const hazardBtn = addGameButton(
         this,

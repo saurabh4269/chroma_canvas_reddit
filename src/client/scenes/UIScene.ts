@@ -131,6 +131,9 @@ export class UIScene extends Scene {
     return pad;
   }
 
+  private heldLeft = false;
+  private heldRight = false;
+
   private buildTouchControls() {
     this.leftBtn = this.makePad('cc-pad-left', 76);
     this.rightBtn = this.makePad('cc-pad-right', 76);
@@ -138,26 +141,37 @@ export class UIScene extends Scene {
 
     const bindHold = (
       btn: Phaser.GameObjects.Image,
-      onDown: () => void
+      side: 'left' | 'right'
     ) => {
-      btn.on('pointerdown', () => {
-        btn.setScale(btn.scale * 0.92).setAlpha(1);
-        onDown();
-      });
+      const press = () => {
+        btn.setScale(0.92).setAlpha(1);
+        if (side === 'left') {
+          this.heldLeft = true;
+          this.heldRight = false;
+        } else {
+          this.heldRight = true;
+          this.heldLeft = false;
+        }
+        this.syncTouch();
+      };
       const release = () => {
         btn.setDisplaySize(76, 76).setAlpha(0.92);
-        this.sendTouch(false, false, false);
+        if (side === 'left') this.heldLeft = false;
+        else this.heldRight = false;
+        this.syncTouch();
       };
+      btn.on('pointerdown', press);
       btn.on('pointerup', release);
       btn.on('pointerout', release);
     };
 
-    bindHold(this.leftBtn, () => this.sendTouch(true, false, false));
-    bindHold(this.rightBtn, () => this.sendTouch(false, true, false));
+    bindHold(this.leftBtn, 'left');
+    bindHold(this.rightBtn, 'right');
 
+    // Jump is a pulse; never clear held left/right when jumping
     this.jumpBtn.on('pointerdown', () => {
-      this.jumpBtn.setScale(this.jumpBtn.scale * 0.92).setAlpha(1);
-      this.sendTouch(false, false, true);
+      this.jumpBtn.setScale(0.92).setAlpha(1);
+      this.syncTouch(true);
       this.time.delayedCall(90, () => {
         this.jumpBtn.setDisplaySize(92, 92).setAlpha(0.92);
       });
@@ -177,9 +191,9 @@ export class UIScene extends Scene {
     }
   }
 
-  private sendTouch(left: boolean, right: boolean, jump: boolean) {
+  private syncTouch(jumpPulse = false) {
     const game = this.scene.get('Game') as GameSceneLike;
-    game.setTouchInput?.(left, right, jump);
+    game.setTouchInput?.(this.heldLeft, this.heldRight, jumpPulse);
   }
 
   override update() {

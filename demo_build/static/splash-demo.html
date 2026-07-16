@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chroma Canvas</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Nunito", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      body {
+        background: linear-gradient(168deg, #4BA3D9 0%, #7EC8F0 28%, #D6F0FF 58%, #FFE8C8 82%, #FF8A70 100%);
+        color: #1a2744;
+      }
+      .app { display: flex; position: relative; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; gap: 16px; overflow: hidden; }
+      .orb-glow {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffe56699 0%, transparent 70%);
+        top: 10%;
+        right: 18%;
+      }
+      .snoo { object-fit: contain; width: 40%; max-width: 180px; margin: 0 auto; filter: drop-shadow(0 8px 18px #ff6f6188); }
+      .content { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 16px; }
+      .title { font-size: 1.75em; font-weight: 800; text-align: center; color: #1a2744; text-shadow: 0 4px 0 #ffe566; }
+      .description { font-size: 0.95em; text-align: center; color: #2c3e5c; max-width: 320px; font-weight: 600; }
+      .level-info { font-size: 0.85em; text-align: center; color: #ff6f61; font-weight: 700; }
+      .start-button {
+        background: linear-gradient(135deg, #ff6f61, #ffc14a);
+        color: #1a2744;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        padding: 10px 28px;
+        height: 40px;
+        font-size: 1.1em;
+        font-weight: 800;
+        border-radius: 20px;
+        box-shadow: 0 6px 0 #ff6f6166, 0 10px 24px #ffc14a55;
+      }
+      .footer { position: absolute; bottom: 16px; font-size: 0.75em; color: #5a6b86; font-weight: 600; }
+    </style>
+  </head>
+  <body class="app">
+    <div class="orb-glow"></div>
+    <img class="snoo" src="/snoo.png" alt="Snoo" />
+    <div class="content">
+      <h1 class="title">Chroma Canvas</h1>
+      <p class="description">Daily precision platformer. Death petrifies you into a permanent platform.</p>
+      <p class="level-info">Level #42 · 127 fallen · Hey saurabh42</p>
+    </div>
+    <div><button class="start-button">Play</button></div>
+    <footer class="footer"><span>!hazard comments shape tomorrow</span></footer>
+  </body>
+</html>

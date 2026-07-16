@@ -40,9 +40,9 @@ export const getPlayerStats = async (username: string): Promise<PlayerStats> => 
 export const recordDeath = async (username: string): Promise<PlayerStats> => {
   const stats = await getPlayerStats(username);
   stats.totalDeaths += 1;
+  // Do not touch lastPlayedDate — that field tracks last *win* day for streaks.
   await redis.hSet(playerKey(username), {
     totalDeaths: String(stats.totalDeaths),
-    lastPlayedDate: todayUtc(),
   });
   return stats;
 };
@@ -57,9 +57,12 @@ export const recordWin = async (
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
-  if (stats.lastPlayedDate === yesterdayStr) {
+  // lastPlayedDate = last win day. Same-day re-wins keep streak; deaths must not reset it.
+  if (stats.lastPlayedDate === today) {
+    // already counted today's win toward streak
+  } else if (stats.lastPlayedDate === yesterdayStr) {
     stats.streak += 1;
-  } else if (stats.lastPlayedDate !== today) {
+  } else {
     stats.streak = 1;
   }
 

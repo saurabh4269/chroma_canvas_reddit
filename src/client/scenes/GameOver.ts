@@ -27,21 +27,21 @@ export class GameOver extends Scene {
   create() {
     const { width, height } = this.scale;
     this.cameras.resize(width, height);
-    this.cameras.main.setBackgroundColor(this.resultData.won ? 0x0a2840 : 0x2a0a1a);
+    this.cameras.main.setBackgroundColor(this.resultData.won ? 0x7ec8f0 : 0xffb088);
 
-    const bg = this.add.image(0, 0, 'background').setOrigin(0).setAlpha(0.2);
+    const bg = this.add.image(0, 0, 'background').setOrigin(0).setAlpha(0.85);
     bg.setDisplaySize(width, height);
 
     const title = this.resultData.won ? 'Orb Delivered!' : 'Petrified!';
-    const color = this.resultData.won ? '#7ee8fa' : '#ff6bcb';
+    const color = this.resultData.won ? '#1a2744' : '#ff6f61';
 
     this.add
       .text(width / 2, height * 0.2, title, {
         fontFamily: 'Arial Black',
         fontSize: '48px',
         color,
-        stroke: '#0d0221',
-        strokeThickness: 8,
+        stroke: '#fff8f0',
+        strokeThickness: 10,
       })
       .setOrigin(0.5);
 
@@ -53,12 +53,12 @@ export class GameOver extends Scene {
     this.add
       .text(width / 2, height * 0.38, subtitle, {
         fontSize: '18px',
-        color: '#e8d5ff',
+        color: '#1a2744',
         align: 'center',
       })
       .setOrigin(0.5);
 
-    this.makeButton(width / 2, height * 0.55, 'Play Again', 0x4a3f7a, async () => {
+    this.makeButton(width / 2, height * 0.55, 'Play Again', 0xff6f61, async () => {
       try {
         const init = await fetchInit();
         this.registry.set('init', init);
@@ -71,7 +71,7 @@ export class GameOver extends Scene {
     });
 
     if (!this.resultData.won) {
-      this.makeButton(width / 2, height * 0.65, 'Comment My Death', 0x2d1b69, async () => {
+      this.makeButton(width / 2, height * 0.65, 'Comment My Death', 0xffc14a, async () => {
         reportJourneyInteraction('comment_death');
         try {
           const res = await postCommentDeath();
@@ -82,7 +82,7 @@ export class GameOver extends Scene {
       });
     }
 
-    this.makeButton(width / 2, height * 0.75, 'Subscribe', 0x1a0533, async () => {
+    this.makeButton(width / 2, height * 0.75, 'Subscribe', 0x4ba3d9, async () => {
       reportJourneyInteraction('subscribe');
       try {
         const res = await postSubscribe();
@@ -92,7 +92,7 @@ export class GameOver extends Scene {
       }
     });
 
-    this.makeButton(width / 2, height * 0.85, 'Main Menu', 0x0d0221, () => {
+    this.makeButton(width / 2, height * 0.85, 'Main Menu', 0x1a2744, () => {
       reportJourneyEnd({ complete: false });
       this.scene.start('MainMenu');
     });
@@ -109,7 +109,7 @@ export class GameOver extends Scene {
       .text(x, y, label, {
         fontFamily: 'Arial Black',
         fontSize: '20px',
-        color: '#ffffff',
+        color: bgColor === 0xffc14a ? '#1a2744' : '#ffffff',
         backgroundColor: `#${bgColor.toString(16).padStart(6, '0')}`,
         padding: { x: 20, y: 10 },
       })
@@ -123,8 +123,8 @@ export class GameOver extends Scene {
     const toast = this.add
       .text(this.scale.width / 2, this.scale.height * 0.92, msg, {
         fontSize: '14px',
-        color: '#7ee8fa',
-        backgroundColor: '#1a0533cc',
+        color: '#1a2744',
+        backgroundColor: '#fff8f0ee',
         padding: { x: 12, y: 6 },
       })
       .setOrigin(0.5);

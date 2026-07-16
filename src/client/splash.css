@@ -7,8 +7,8 @@
 }
 
 body {
-  background: linear-gradient(160deg, #0d0221 0%, #2d1b69 50%, #1a0533 100%);
-  color: #e8d5ff;
+  background: linear-gradient(168deg, #4ba3d9 0%, #7ec8f0 28%, #d6f0ff 58%, #ffe8c8 82%, #ff8a70 100%);
+  color: #1a2744;
 }
 
 .app {
@@ -28,21 +28,8 @@ body {
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, #7ee8fa55 0%, transparent 70%);
+  background: radial-gradient(circle, #ffe56688 0%, transparent 70%);
   top: 15%;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
 }
 
 .snoo {
@@ -50,7 +37,7 @@ body {
   width: 40%;
   max-width: 180px;
   margin: 0 auto;
-  filter: drop-shadow(0 0 12px #ff6bcb88);
+  filter: drop-shadow(0 8px 16px #ff6f6188);
 }
 
 .content {
@@ -65,48 +52,45 @@ body {
   font-size: 1.6em;
   font-weight: bold;
   text-align: center;
-  color: #ff6bcb;
+  color: #1a2744;
+  text-shadow: 0 3px 0 #ffe566;
 }
 
 .description {
   font-size: 0.95em;
   text-align: center;
-  color: #c4b5fd;
+  color: #2c3e5c;
   max-width: 320px;
 }
 
 .level-info {
   font-size: 0.85em;
   text-align: center;
-  color: #7ee8fa;
+  color: #ff6f61;
 }
 
 .start-button {
-  background: linear-gradient(135deg, #ff6bcb, #7ee8fa);
-  color: #0d0221;
+  background: linear-gradient(135deg, #ff6f61, #ffc14a);
+  color: #1a2744;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
   border: none;
   padding: 10px 28px;
   height: 40px;
   font-size: 1.1em;
   font-weight: bold;
   border-radius: 20px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 20px #ff6bcb44;
+  box-shadow: 0 4px 20px #ff6f6144;
 }
 
 .start-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 28px #7ee8fa55;
+  box-shadow: 0 6px 28px #ffc14a55;
 }
 
 .footer {
   position: absolute;
   bottom: 16px;
   font-size: 0.75em;
-  color: #8b7ec8;
+  color: #5a6b86;
 }

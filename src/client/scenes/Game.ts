@@ -51,14 +51,18 @@ export class Game extends Scene {
   }
 
   create() {
-    const init = this.registry.get('init') as InitResponse;
+    const init = this.registry.get('init') as InitResponse | undefined;
+    if (!init?.level) {
+      this.scene.start('MainMenu');
+      return;
+    }
     this.level = init.level;
     this.corpses = init.corpses;
     this.startTime = Date.now();
 
     this.physics.world.setBounds(0, 0, this.level.width, this.level.height + 200);
     this.cameras.main.setBounds(0, 0, this.level.width, this.level.height);
-    this.cameras.main.setBackgroundColor(0x0d0221);
+    this.cameras.main.setBackgroundColor(0x5eb6e8);
 
     this.buildParallax();
     this.buildPlatforms();
@@ -194,7 +198,9 @@ export class Game extends Scene {
       .text(this.level.exit.x, this.level.exit.y - 40, 'EXIT', {
         fontFamily: 'Arial Black',
         fontSize: '20px',
-        color: '#7ee8fa',
+        color: '#1a2744',
+        stroke: '#ffe566',
+        strokeThickness: 4,
       })
       .setOrigin(0.5);
   }

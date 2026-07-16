@@ -7,10 +7,13 @@ import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
 import { UIScene } from './scenes/UIScene';
 
+const isCaptureMode =
+  typeof window !== 'undefined' && window.location.search.includes('capture=1');
+
 const config: Phaser.Types.Core.GameConfig = {
-  type: AUTO,
+  type: isCaptureMode ? Phaser.CANVAS : AUTO,
   parent: 'game-container',
-  backgroundColor: '#0d0221',
+  backgroundColor: '#7EC8F0',
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -28,8 +31,16 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 const StartGame = (parent: string) => {
-  return new Game({ ...config, parent });
+  const game = new Game({ ...config, parent });
+  window.__CHROMA_GAME__ = game;
+  return game;
 };
+
+declare global {
+  interface Window {
+    __CHROMA_GAME__?: Game;
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   StartGame('game-container');

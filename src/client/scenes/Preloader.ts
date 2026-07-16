@@ -17,9 +17,9 @@ export class Preloader extends Scene {
       .text(this.scale.width / 2, this.scale.height * 0.35, 'Chroma Canvas', {
         fontFamily: 'Arial Black',
         fontSize: '42px',
-        color: '#e8d5ff',
-        stroke: '#2a1040',
-        strokeThickness: 6,
+        color: '#1a2744',
+        stroke: '#ffe566',
+        strokeThickness: 8,
       })
       .setOrigin(0.5);
 
@@ -28,7 +28,7 @@ export class Preloader extends Scene {
       this.scale.height * 0.55,
       4,
       20,
-      0xff6bcb
+      0xff6f61
     ).setOrigin(0, 0.5);
 
     this.load.on('progress', (p: number) => {
@@ -38,14 +38,16 @@ export class Preloader extends Scene {
     this.initReady = fetchInit()
       .then((data) => {
         this.registry.set('init', data);
+        this.registry.set('initError', null);
       })
       .catch((err) => {
         console.error('init fetch failed', err);
+        this.registry.set('initError', err instanceof Error ? err.message : 'init failed');
       });
   }
 
   preload() {
-    this.load.setPath('../assets');
+    this.load.setPath('assets');
     this.load.image('logo', 'logo.png');
 
     const shard = this.make.graphics({ x: 0, y: 0 });

@@ -15,14 +15,18 @@ export class UIScene extends Scene {
   }
 
   create() {
-    const init = this.registry.get('init') as InitResponse;
+    const init = this.registry.get('init') as InitResponse | undefined;
+    if (!init) {
+      this.scene.stop();
+      return;
+    }
     this.startTime = Date.now();
 
     this.corpseText = this.add
       .text(16, 12, `${init.corpseCount} fallen`, {
         fontSize: '16px',
-        color: '#e8d5ff',
-        backgroundColor: '#1a0533aa',
+        color: '#1a2744',
+        backgroundColor: '#fff8f0cc',
         padding: { x: 8, y: 4 },
       })
       .setScrollFactor(0)
@@ -31,8 +35,8 @@ export class UIScene extends Scene {
     this.timerText = this.add
       .text(16, 44, '0.0s', {
         fontSize: '16px',
-        color: '#7ee8fa',
-        backgroundColor: '#1a0533aa',
+        color: '#ff6f61',
+        backgroundColor: '#fff8f0cc',
         padding: { x: 8, y: 4 },
       })
       .setScrollFactor(0)

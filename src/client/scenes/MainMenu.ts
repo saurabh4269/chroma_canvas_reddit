@@ -1,6 +1,7 @@
 import { Scene, GameObjects } from 'phaser';
 import type { InitResponse } from '../../shared/api';
 import { reportJourneyStart } from '../journeys';
+import { fetchInit } from '../net/api';
 
 export class MainMenu extends Scene {
   background: GameObjects.Image | null = null;
@@ -24,10 +25,33 @@ export class MainMenu extends Scene {
     this.scale.on('resize', () => this.refreshLayout());
 
     this.input.once('pointerdown', () => {
-      reportJourneyStart();
-      this.scene.start('Game');
-      this.scene.launch('UIScene');
+      void this.onPointer();
     });
+  }
+
+  private async onPointer(): Promise<void> {
+    let init = this.registry.get('init') as InitResponse | undefined;
+    if (!init?.level) {
+      try {
+        init = await fetchInit();
+        this.registry.set('init', init);
+        this.registry.set('initError', null);
+      } catch (err) {
+        this.registry.set(
+          'initError',
+          err instanceof Error ? err.message : 'init failed'
+        );
+        this.refreshLayout();
+        this.input.once('pointerdown', () => {
+          void this.onPointer();
+        });
+        return;
+      }
+    }
+
+    reportJourneyStart();
+    this.scene.start('Game');
+    this.scene.launch('UIScene');
   }
 
   private refreshLayout(): void {
@@ -35,12 +59,13 @@ export class MainMenu extends Scene {
     this.cameras.resize(width, height);
 
     const init = this.registry.get('init') as InitResponse | undefined;
+    const initError = this.registry.get('initError') as string | null | undefined;
     const level = init?.level;
     const player = init?.player;
     const corpses = init?.corpseCount ?? 0;
 
     if (!this.background) {
-      this.background = this.add.image(0, 0, 'background').setOrigin(0).setAlpha(0.35);
+      this.background = this.add.image(0, 0, 'background').setOrigin(0).setAlpha(0.92);
     }
     this.background.setDisplaySize(width, height);
 
@@ -51,9 +76,9 @@ export class MainMenu extends Scene {
         .text(0, 0, '', {
           fontFamily: 'Arial Black',
           fontSize: '48px',
-          color: '#ff6bcb',
-          stroke: '#1a0a2e',
-          strokeThickness: 8,
+          color: '#ff6f61',
+          stroke: '#fff8f0',
+          strokeThickness: 10,
           align: 'center',
         })
         .setOrigin(0.5);
@@ -64,7 +89,7 @@ export class MainMenu extends Scene {
         .text(0, 0, '', {
           fontFamily: 'Arial',
           fontSize: '22px',
-          color: '#e8d5ff',
+          color: '#1a2744',
           align: 'center',
         })
         .setOrigin(0.5);
@@ -75,23 +100,34 @@ export class MainMenu extends Scene {
         .text(0, 0, 'Tap to Start', {
           fontFamily: 'Arial Black',
           fontSize: '28px',
-          color: '#7ee8fa',
-          stroke: '#0a1628',
-          strokeThickness: 4,
+          color: '#fff8f0',
+          stroke: '#ff6f61',
+          strokeThickness: 8,
         })
         .setOrigin(0.5);
     }
 
-    this.title.setText(level ? `Level #${level.seq}` : 'Chroma Canvas');
-    this.subtitle.setText(
-      [
-        `${corpses} have fallen before you`,
-        player ? `Streak: ${player.streak} · ${player.flairTier}` : '',
-        'Carry the Chroma Orb to the exit',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    );
+    if (initError || !level) {
+      this.title.setText('Chroma Canvas');
+      this.subtitle.setText(
+        initError
+          ? `Could not load level.\n${initError}\nTap to retry.`
+          : 'Loading level…\nTap to retry if this sticks.'
+      );
+      this.hint.setText('Tap to Retry');
+    } else {
+      this.title.setText(`Level #${level.seq}`);
+      this.subtitle.setText(
+        [
+          `${corpses} have fallen before you`,
+          player ? `Streak: ${player.streak} · ${player.flairTier}` : '',
+          'Carry the Chroma Orb to the exit',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      );
+      this.hint.setText('Tap to Start');
+    }
 
     this.title.setPosition(width / 2, height * 0.32).setScale(scaleFactor);
     this.subtitle.setPosition(width / 2, height * 0.52).setScale(scaleFactor);

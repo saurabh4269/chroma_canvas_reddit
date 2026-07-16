@@ -6,12 +6,18 @@ import { rotateLevel } from '../core/level';
 
 export const menu = new Hono();
 
+const postCommentUrl = (postId: string | undefined) => {
+  const id = (postId ?? '').replace(/^t3_/, '');
+  const sub = context.subredditName ?? 'chroma_canvas_dev';
+  return `https://www.reddit.com/r/${sub}/comments/${id}`;
+};
+
 menu.post('/post-create', async (c) => {
   try {
     const post = await createDailyPost();
     return c.json<UiResponse>(
       {
-        navigateTo: `https://reddit.com/r/${context.subredditName}/comments/${post.id}`,
+        navigateTo: postCommentUrl(post.id),
       },
       200
     );
@@ -28,7 +34,7 @@ menu.post('/force-rotate', async (c) => {
     return c.json<UiResponse>(
       {
         showToast: `Rotated to Level #${level.seq}`,
-        navigateTo: `https://reddit.com/r/${context.subredditName}/comments/${post.id}`,
+        navigateTo: postCommentUrl(post.id),
       },
       200
     );

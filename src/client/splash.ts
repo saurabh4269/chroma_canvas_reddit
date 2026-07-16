@@ -8,13 +8,17 @@ startButton.addEventListener('click', (e) => {
   requestExpandedMode(e, 'game');
 });
 
+type SplashPostData = {
+  levelSeq?: number;
+  date?: string;
+  corpseCount?: number;
+};
+
 function init() {
-  const username = context.username ?? 'climber';
+  const username = context?.username ?? 'climber';
   titleElement.textContent = `Chroma Canvas`;
 
-  const postData = context.postData as
-    | { levelSeq?: number; date?: string; corpseCount?: number }
-    | undefined;
+  const postData = context?.postData as SplashPostData | undefined;
 
   if (postData?.levelSeq) {
     levelInfo.textContent = `Level #${postData.levelSeq} · ${postData.corpseCount ?? 0} fallen · Hey ${username}`;

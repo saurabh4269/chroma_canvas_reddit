@@ -37,6 +37,8 @@ export const REDIS = {
 } as const;
 
 export const playerKey = (username: string) => `cc:player:${username}`;
+export const dailyWinsKey = (date: string) => `cc:pulse:wins:${date}`;
+export const dailyDeathsKey = (date: string) => `cc:pulse:deaths:${date}`;
 export const leaderboardDailyKey = (date: string) => `cc:leaderboard:daily:${date}`;
 export const levelHistoryKey = (date: string) => `cc:level:history:${date}`;
 export const subsKey = (username: string) => `cc:subs:${username}`;

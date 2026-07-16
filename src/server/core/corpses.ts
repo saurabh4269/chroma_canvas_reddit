@@ -15,7 +15,8 @@ export const getCorpseCount = async (): Promise<number> => {
 export const addCorpse = async (
   username: string,
   x: number,
-  y: number
+  y: number,
+  snoovatarUrl?: string
 ): Promise<{ accepted: boolean; count: number }> => {
   const card = await redis.zCard(REDIS.corpsesCurrent);
   if (card >= CORPSE_CAP) {
@@ -24,6 +25,7 @@ export const addCorpse = async (
 
   const now = Date.now();
   const record: CorpseRecord = { u: username, x, y, t: now };
+  if (snoovatarUrl) record.s = snoovatarUrl;
   await redis.zAdd(REDIS.corpsesCurrent, { member: JSON.stringify(record), score: now });
 
   const count = await redis.incrBy(REDIS.corpsesCount, 1);

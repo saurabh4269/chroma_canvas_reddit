@@ -1,96 +1,268 @@
+/* Sunny arcade splash — BlueSky casual + daylight hills, brand-first */
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+}
+
+:root {
+  --cc-sky-deep: #3d9fd6;
+  --cc-sky-mid: #7ec8f0;
+  --cc-sky-light: #d6f0ff;
+  --cc-sand: #ffe8c8;
+  --cc-sun: #ffc14a;
+  --cc-sun-soft: #ffe566;
+  --cc-coral: #ff6f61;
+  --cc-coral-deep: #e85d4c;
+  --cc-ink: #1a2744;
+  --cc-ink-soft: #2c3e5c;
+  --cc-cream: #fff8f0;
+  --cc-orb: #5eead4;
+  --font-display: 'Fredoka', 'Trebuchet MS', sans-serif;
+  --font-body: 'Nunito', 'Segoe UI', sans-serif;
 }
 
 body {
-  background: linear-gradient(168deg, #4ba3d9 0%, #7ec8f0 28%, #d6f0ff 58%, #ffe8c8 82%, #ff8a70 100%);
-  color: #1a2744;
+  font-family: var(--font-body);
+  color: var(--cc-ink);
+  background: var(--cc-sky-mid);
 }
 
 .app {
-  display: flex;
   position: relative;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
-  gap: 16px;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(
+    168deg,
+    var(--cc-sky-deep) 0%,
+    var(--cc-sky-mid) 28%,
+    var(--cc-sky-light) 52%,
+    var(--cc-sand) 78%,
+    #ff9a7a 100%
+  );
+}
+
+.sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   overflow: hidden;
 }
 
-.orb-glow {
+.sun {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  top: 8%;
+  right: 10%;
+  width: min(42vw, 180px);
+  height: min(42vw, 180px);
   border-radius: 50%;
-  background: radial-gradient(circle, #ffe56688 0%, transparent 70%);
-  top: 15%;
+  background: radial-gradient(
+    circle,
+    #fff6c8 0%,
+    var(--cc-sun-soft) 35%,
+    transparent 70%
+  );
+  animation: sun-breathe 3.2s ease-in-out infinite;
+}
+
+.orb-float {
+  position: absolute;
+  left: 14%;
+  top: 22%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--cc-orb) 55%, #2dd4bf 100%);
+  box-shadow: 0 0 24px #5eead466;
+  animation: orb-drift 4s ease-in-out infinite;
+}
+
+.hill {
+  position: absolute;
+  bottom: -8%;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.hill-a {
+  left: -20%;
+  width: 70%;
+  height: 36%;
+  background: #8fd0a8;
+}
+
+.hill-b {
+  right: -18%;
+  width: 65%;
+  height: 32%;
+  background: #f0c89a;
+  opacity: 0.45;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 20px 48px;
+  width: min(100%, 420px);
+  text-align: center;
 }
 
 .snoo {
   object-fit: contain;
-  width: 40%;
-  max-width: 180px;
-  margin: 0 auto;
-  filter: drop-shadow(0 8px 16px #ff6f6188);
+  width: 38%;
+  max-width: 150px;
+  filter: drop-shadow(0 10px 18px #ff6f6155);
+  animation: snoo-bob 2.8s ease-in-out infinite;
 }
 
 .content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 0 16px;
+  gap: 6px;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cc-coral-deep);
 }
 
 .title {
-  font-size: 1.6em;
-  font-weight: bold;
-  text-align: center;
-  color: #1a2744;
-  text-shadow: 0 3px 0 #ffe566;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 2.55rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--cc-ink);
+  text-shadow: 0 3px 0 var(--cc-sun-soft);
 }
 
 .description {
-  font-size: 0.95em;
-  text-align: center;
-  color: #2c3e5c;
-  max-width: 320px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--cc-ink-soft);
+  max-width: 300px;
 }
 
 .level-info {
-  font-size: 0.85em;
-  text-align: center;
-  color: #ff6f61;
+  margin-top: 4px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--cc-coral-deep);
+  background: rgba(255, 248, 240, 0.88);
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 193, 74, 0.55);
 }
 
 .start-button {
-  background: linear-gradient(135deg, #ff6f61, #ffc14a);
-  color: #1a2744;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  appearance: none;
   border: none;
-  padding: 10px 28px;
-  height: 40px;
-  font-size: 1.1em;
-  font-weight: bold;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px #ff6f6144;
+  margin-top: 4px;
+  min-width: 168px;
+  height: 48px;
+  padding: 0 28px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cc-cream);
+  cursor: pointer;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ff8a75 0%, var(--cc-coral) 55%, var(--cc-coral-deep) 100%);
+  box-shadow:
+    0 5px 0 #c74a3d,
+    0 10px 24px #ff6f6144;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+  animation: cta-bounce 1.8s ease-in-out infinite;
 }
 
 .start-button:hover {
-  box-shadow: 0 6px 28px #ffc14a55;
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 0 #c74a3d,
+    0 14px 28px #ffc14a55;
+  animation-play-state: paused;
+}
+
+.start-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 #c74a3d,
+    0 6px 14px #ff6f6144;
+  animation-play-state: paused;
 }
 
 .footer {
   position: absolute;
-  bottom: 16px;
-  font-size: 0.75em;
-  color: #5a6b86;
+  bottom: 14px;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(44, 62, 92, 0.72);
+}
+
+@keyframes sun-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes snoo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes cta-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sun,
+  .orb-float,
+  .snoo,
+  .start-button {
+    animation: none;
+  }
 }

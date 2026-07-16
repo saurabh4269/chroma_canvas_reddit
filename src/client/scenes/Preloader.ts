@@ -1,6 +1,9 @@
 import { Scene } from 'phaser';
 import { fetchInit } from '../net/api';
 import { reportAppReady } from '../journeys';
+import { FONTS, HEX, COLORS } from '../theme';
+import { generateGameTextures } from '../ui/textures';
+import { drawSunnyBackdrop } from '../ui/phaserUi';
 
 export class Preloader extends Scene {
   private initReady!: Promise<void>;
@@ -10,29 +13,37 @@ export class Preloader extends Scene {
   }
 
   init() {
-    this.add.image(this.scale.width / 2, this.scale.height / 2, 'background')
-      .setDisplaySize(this.scale.width, this.scale.height);
+    const { width, height } = this.scale;
+    drawSunnyBackdrop(this, width, height);
 
     this.add
-      .text(this.scale.width / 2, this.scale.height * 0.35, 'Chroma Canvas', {
-        fontFamily: 'Arial Black',
-        fontSize: '42px',
-        color: '#1a2744',
-        stroke: '#ffe566',
+      .text(width / 2, height * 0.32, 'Chroma Canvas', {
+        fontFamily: FONTS.display,
+        fontSize: '44px',
+        color: HEX.ink,
+        stroke: HEX.sunSoft,
         strokeThickness: 8,
       })
       .setOrigin(0.5);
 
-    const bar = this.add.rectangle(
-      this.scale.width / 2 - 158,
-      this.scale.height * 0.55,
-      4,
-      20,
-      0xff6f61
-    ).setOrigin(0, 0.5);
+    this.add
+      .text(width / 2, height * 0.42, 'Warming the canvas…', {
+        fontFamily: FONTS.body,
+        fontSize: '16px',
+        color: HEX.inkSoft,
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .rectangle(width / 2, height * 0.58, 280, 18, COLORS.cream, 0.9)
+      .setStrokeStyle(2, COLORS.sunSoft);
+
+    const bar = this.add
+      .rectangle(width / 2 - 138, height * 0.58, 4, 12, COLORS.coral)
+      .setOrigin(0, 0.5);
 
     this.load.on('progress', (p: number) => {
-      bar.width = 4 + 312 * p;
+      bar.width = 4 + 268 * p;
     });
 
     this.initReady = fetchInit()
@@ -42,19 +53,17 @@ export class Preloader extends Scene {
       })
       .catch((err) => {
         console.error('init fetch failed', err);
-        this.registry.set('initError', err instanceof Error ? err.message : 'init failed');
+        this.registry.set(
+          'initError',
+          err instanceof Error ? err.message : 'init failed'
+        );
       });
   }
 
   preload() {
     this.load.setPath('assets');
     this.load.image('logo', 'logo.png');
-
-    const shard = this.make.graphics({ x: 0, y: 0 });
-    shard.fillStyle(0xffffff);
-    shard.fillRect(0, 0, 6, 6);
-    shard.generateTexture('shard', 6, 6);
-    shard.destroy();
+    generateGameTextures(this);
   }
 
   create() {

@@ -21,9 +21,9 @@ function init() {
   const postData = context?.postData as SplashPostData | undefined;
 
   if (postData?.levelSeq) {
-    levelInfo.textContent = `Level #${postData.levelSeq} · ${postData.corpseCount ?? 0} fallen · Hey ${username}`;
+    levelInfo.textContent = `Level #${postData.levelSeq} · ${postData.corpseCount ?? 0} fallen · ${username}`;
   } else {
-    levelInfo.textContent = `Hey ${username} — carry the orb, petrify on death`;
+    levelInfo.textContent = `${username} — carry the orb, petrify on death`;
   }
 }
 

@@ -13,7 +13,7 @@ const isCaptureMode =
 const config: Phaser.Types.Core.GameConfig = {
   type: isCaptureMode ? Phaser.CANVAS : AUTO,
   parent: 'game-container',
-  backgroundColor: '#7EC8F0',
+  backgroundColor: '#7ec8f0',
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,

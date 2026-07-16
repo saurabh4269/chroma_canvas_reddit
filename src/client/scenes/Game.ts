@@ -5,7 +5,6 @@ import type { CorpseRecord, LevelDef } from '../../shared/level';
 import {
   CORPSE_PLATFORM_H,
   CORPSE_PLATFORM_W,
-  ORB_RADIUS,
   PLAYER_H,
   PLAYER_W,
 } from '../../shared/constants';
@@ -14,6 +13,7 @@ import {
   reportJourneyEnd,
   reportJourneyProgress,
 } from '../journeys';
+import { COLORS, FONTS, HEX } from '../theme';
 
 type GameResult = {
   won: boolean;
@@ -22,14 +22,18 @@ type GameResult = {
   y: number;
 };
 
+type PhysicsSprite = Phaser.GameObjects.Image & {
+  body: Phaser.Physics.Arcade.Body;
+};
+
 export class Game extends Scene {
-  player!: Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
-  orb!: Phaser.GameObjects.Arc;
+  player!: PhysicsSprite;
+  orb!: Phaser.GameObjects.Image;
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   jumpKey!: Phaser.Input.Keyboard.Key;
   level!: LevelDef;
   corpses: CorpseRecord[] = [];
-  hazards: Phaser.GameObjects.Rectangle[] = [];
+  hazards: Phaser.GameObjects.GameObject[] = [];
   startTime = 0;
   carryingOrb = true;
   dead = false;
@@ -62,7 +66,7 @@ export class Game extends Scene {
 
     this.physics.world.setBounds(0, 0, this.level.width, this.level.height + 200);
     this.cameras.main.setBounds(0, 0, this.level.width, this.level.height);
-    this.cameras.main.setBackgroundColor(0x5eb6e8);
+    this.cameras.main.setBackgroundColor(COLORS.skyMid);
 
     this.buildParallax();
     this.buildPlatforms();
@@ -82,19 +86,71 @@ export class Game extends Scene {
   }
 
   private buildParallax() {
+    const w = this.level.width;
     const h = this.level.height;
-    this.add
-      .rectangle(this.level.width / 2, h / 2, this.level.width, h, 0x1a0533)
-      .setScrollFactor(0.2);
-    this.add
-      .rectangle(this.level.width / 2, h * 0.7, this.level.width, h * 0.5, 0x2d1b69)
-      .setScrollFactor(0.5);
+
+    const sky = this.add.graphics().setScrollFactor(0.05);
+    sky.fillGradientStyle(
+      COLORS.skyDeep,
+      COLORS.skyMid,
+      COLORS.sand,
+      COLORS.skyLight,
+      1,
+      1,
+      1,
+      1
+    );
+    sky.fillRect(0, 0, w, h);
+
+    const sun = this.add
+      .circle(w * 0.82, h * 0.18, 70, COLORS.sunSoft, 0.45)
+      .setScrollFactor(0.08);
+    this.tweens.add({
+      targets: sun,
+      alpha: 0.28,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 2600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Distant cool hills
+    const far = this.add.graphics().setScrollFactor(0.2);
+    far.fillStyle(COLORS.hillFar, 0.65);
+    for (let i = 0; i < 8; i++) {
+      far.fillEllipse(i * 480 + 120, h * 0.72, 520, 220);
+    }
+
+    // Mid green hills
+    const mid = this.add.graphics().setScrollFactor(0.4);
+    mid.fillStyle(COLORS.hillMid, 0.55);
+    for (let i = 0; i < 10; i++) {
+      mid.fillEllipse(i * 400 + 80, h * 0.82, 420, 180);
+    }
+
+    // Near warm dunes
+    const near = this.add.graphics().setScrollFactor(0.55);
+    near.fillStyle(COLORS.hillNear, 0.4);
+    for (let i = 0; i < 12; i++) {
+      near.fillEllipse(i * 340 + 40, h * 0.92, 360, 140);
+    }
   }
 
   private buildPlatforms() {
     const group = this.physics.add.staticGroup();
     for (const p of this.level.platforms) {
-      const rect = this.add.rectangle(p.x + p.w / 2, p.y + p.h / 2, p.w, p.h, 0x4a3f7a);
+      const cx = p.x + p.w / 2;
+      const cy = p.y + p.h / 2;
+      const rect = this.add
+        .rectangle(cx, cy, p.w, p.h, COLORS.platform)
+        .setStrokeStyle(1, COLORS.platformShadow, 0.55)
+        .setDepth(2);
+      // Grass cap for Sunny Hills readability without fragile tiled physics bodies
+      this.add
+        .rectangle(cx, p.y + 3, p.w, 6, COLORS.grass)
+        .setDepth(3);
       group.add(rect);
       const body = rect.body as Phaser.Physics.Arcade.StaticBody;
       body.setSize(p.w, p.h);
@@ -105,22 +161,24 @@ export class Game extends Scene {
   private buildCorpses() {
     const group = this.physics.add.staticGroup();
     for (const c of this.corpses) {
-      const rect = this.add.rectangle(
-        c.x,
-        c.y,
-        CORPSE_PLATFORM_W,
-        CORPSE_PLATFORM_H,
-        0x8b7355
-      );
-      group.add(rect);
-      const body = rect.body as Phaser.Physics.Arcade.StaticBody;
+      const stone = this.add
+        .image(c.x, c.y, 'cc-corpse')
+        .setDisplaySize(CORPSE_PLATFORM_W, CORPSE_PLATFORM_H)
+        .setDepth(3);
+      group.add(stone);
+      const body = stone.body as Phaser.Physics.Arcade.StaticBody;
       body.setSize(CORPSE_PLATFORM_W, CORPSE_PLATFORM_H);
       this.add
-        .text(c.x, c.y - 18, c.u.slice(0, 8), {
+        .text(c.x, c.y - 16, c.u.slice(0, 8), {
+          fontFamily: FONTS.body,
           fontSize: '10px',
-          color: '#d4c4a8',
+          fontStyle: '700',
+          color: HEX.inkSoft,
+          backgroundColor: '#fff8f099',
+          padding: { x: 3, y: 1 },
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(4);
     }
     this.registry.set('corpsePlatforms', group);
   }
@@ -128,25 +186,16 @@ export class Game extends Scene {
   private buildHazards() {
     for (const h of this.level.hazards) {
       if (h.type === 'spike') {
-        const spike = this.add.triangle(
-          h.x,
-          h.y,
-          0,
-          16,
-          8,
-          0,
-          16,
-          16,
-          0xff3366
-        );
+        const spike = this.add.image(h.x, h.y, 'cc-spike').setDepth(5);
         this.physics.add.existing(spike);
         const body = spike.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
         body.setImmovable(true);
-        body.setSize(16, 16);
-        this.hazards.push(spike as unknown as Phaser.GameObjects.Rectangle);
+        body.setSize(14, 14);
+        this.hazards.push(spike);
       } else if (h.type === 'movingBlock') {
-        const block = this.add.rectangle(h.x, h.y, 40, 16, 0xff9944);
+        const block = this.add.rectangle(h.x, h.y, 40, 16, COLORS.moving);
+        block.setStrokeStyle(2, COLORS.cream, 0.5);
         this.physics.add.existing(block);
         const body = block.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
@@ -162,7 +211,7 @@ export class Game extends Scene {
         });
         this.hazards.push(block);
       } else if (h.type === 'gap') {
-        const pit = this.add.rectangle(h.x, h.y + 20, 48, 8, 0x000000, 0.55);
+        const pit = this.add.rectangle(h.x, h.y + 20, 48, 8, COLORS.gap, 0.55);
         this.physics.add.existing(pit);
         const body = pit.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
@@ -170,7 +219,8 @@ export class Game extends Scene {
         body.setSize(48, 8);
         this.hazards.push(pit);
       } else if (h.type === 'crumble') {
-        const crumble = this.add.rectangle(h.x, h.y, 56, 14, 0xaa6644);
+        const crumble = this.add.rectangle(h.x, h.y, 56, 14, COLORS.crumble);
+        crumble.setStrokeStyle(2, COLORS.corpseDeep, 0.6);
         this.physics.add.existing(crumble);
         const body = crumble.body as Phaser.Physics.Arcade.Body;
         body.setAllowGravity(false);
@@ -194,15 +244,31 @@ export class Game extends Scene {
     body.setAllowGravity(false);
     this.registry.set('exitZone', zone);
 
+    const gate = this.add.graphics().setDepth(1);
+    gate.lineStyle(5, COLORS.sun, 0.95);
+    gate.strokeEllipse(this.level.exit.x, this.level.exit.y, 54, 78);
+    gate.fillStyle(COLORS.orb, 0.18);
+    gate.fillEllipse(this.level.exit.x, this.level.exit.y, 48, 70);
+
     this.add
-      .text(this.level.exit.x, this.level.exit.y - 40, 'EXIT', {
-        fontFamily: 'Arial Black',
-        fontSize: '20px',
-        color: '#1a2744',
-        stroke: '#ffe566',
+      .text(this.level.exit.x, this.level.exit.y - 52, 'EXIT', {
+        fontFamily: FONTS.display,
+        fontSize: '18px',
+        color: HEX.ink,
+        stroke: HEX.sunSoft,
         strokeThickness: 4,
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(6);
+
+    this.tweens.add({
+      targets: gate,
+      alpha: 0.55,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 
   private buildPlayer() {
@@ -211,32 +277,28 @@ export class Game extends Scene {
       'corpsePlatforms'
     ) as Phaser.Physics.Arcade.StaticGroup;
 
-    this.player = this.add.rectangle(
-      this.level.spawn.x,
-      this.level.spawn.y,
-      PLAYER_W,
-      PLAYER_H,
-      0xff6bcb
-    ) as Phaser.GameObjects.Rectangle & { body: Phaser.Physics.Arcade.Body };
-    this.physics.add.existing(this.player);
+    const playerImage = this.add
+      .image(this.level.spawn.x, this.level.spawn.y, 'cc-player')
+      .setDisplaySize(PLAYER_W, PLAYER_H)
+      .setDepth(10);
+    this.physics.add.existing(playerImage);
+    this.player = playerImage as PhysicsSprite;
     this.player.body.setCollideWorldBounds(true);
     this.player.body.setSize(PLAYER_W - 4, PLAYER_H - 4);
 
-    this.orb = this.add.circle(
-      this.level.spawn.x,
-      this.level.spawn.y - 24,
-      ORB_RADIUS,
-      0x7ee8fa,
-      0.9
-    );
+    this.orb = this.add
+      .image(this.level.spawn.x, this.level.spawn.y - 26, 'cc-orb')
+      .setDisplaySize(22, 22)
+      .setDepth(11);
     this.tweens.add({
       targets: this.orb,
-      scaleX: 1.15,
-      scaleY: 1.15,
-      alpha: 0.7,
-      duration: 600,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      alpha: 0.75,
+      duration: 650,
       yoyo: true,
       repeat: -1,
+      ease: 'Sine.easeInOut',
     });
 
     this.physics.add.collider(this.player, platforms);
@@ -246,14 +308,18 @@ export class Game extends Scene {
     for (const hazard of this.hazards) {
       this.physics.add.overlap(this.player, hazard, () => {
         if (!this.dead) {
-          if (hazard.getData('crumble')) {
+          if (
+            'getData' in hazard &&
+            typeof hazard.getData === 'function' &&
+            hazard.getData('crumble')
+          ) {
             this.tweens.add({
               targets: hazard,
               alpha: 0,
               duration: 200,
               onComplete: () => {
                 hazard.destroy();
-                this.hazards = this.hazards.filter((h) => h !== hazard);
+                this.hazards = this.hazards.filter((item) => item !== hazard);
               },
             });
           }
@@ -273,7 +339,7 @@ export class Game extends Scene {
   override update() {
     if (this.dead || !this.player?.body) return;
 
-    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const body = this.player.body;
     const speed = 220;
     const onGround = body.blocked.down || body.touching.down;
 
@@ -282,6 +348,9 @@ export class Game extends Scene {
     if (this.cursors.right.isDown || this.touchRight) moveX = 1;
 
     body.setVelocityX(moveX * speed);
+    if (moveX !== 0) {
+      this.player.setFlipX(moveX < 0);
+    }
 
     if (
       (Phaser.Input.Keyboard.JustDown(this.jumpKey) ||
@@ -332,13 +401,13 @@ export class Game extends Scene {
     const emitter = this.add.particles(this.player.x, this.player.y, 'shard', {
       speed: { min: 60, max: 180 },
       angle: { min: 0, max: 360 },
-      lifespan: 350,
-      scale: { start: 0.8, end: 0 },
-      tint: [0xff6bcb, 0x8b7355],
+      lifespan: 380,
+      scale: { start: 0.9, end: 0 },
+      tint: [COLORS.player, COLORS.corpse, COLORS.sun],
       emitting: false,
     });
-    emitter.explode(10);
-    this.time.delayedCall(400, () => emitter.destroy());
+    emitter.explode(14);
+    this.time.delayedCall(450, () => emitter.destroy());
   }
 
   private async handleDeath() {
@@ -349,7 +418,7 @@ export class Game extends Scene {
 
     this.cameras.main.shake(150, 0.01);
     this.burstDeathShards();
-    this.player.setFillStyle(0x8b7355);
+    this.player.setTint(COLORS.corpseDeep);
     this.player.body.setVelocity(0, 0);
     this.physics.pause();
 
@@ -375,6 +444,15 @@ export class Game extends Scene {
 
     const elapsedMs = Date.now() - this.startTime;
     this.physics.pause();
+
+    this.cameras.main.flash(280, 255, 225, 102);
+    this.tweens.add({
+      targets: this.orb,
+      scaleX: 2.2,
+      scaleY: 2.2,
+      alpha: 0,
+      duration: 320,
+    });
 
     try {
       await postWin({ elapsedMs });

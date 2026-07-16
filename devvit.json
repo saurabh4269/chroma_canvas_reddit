@@ -1,0 +1,76 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "chroma-canvas",
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": {
+        "inline": true,
+        "entry": "splash.html"
+      },
+      "game": {
+        "entry": "game.html"
+      }
+    }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "permissions": {
+    "journeys": true,
+    "redis": true,
+    "reddit": {
+      "enable": true,
+      "asUser": [
+        "SUBMIT_COMMENT",
+        "SUBSCRIBE_TO_SUBREDDIT"
+      ]
+    }
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Create daily Chroma post",
+        "description": "Post today's Chroma Canvas level",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-create"
+      },
+      {
+        "label": "Force rotate level",
+        "description": "Rotate level now (demo/testing)",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/force-rotate"
+      }
+    ]
+  },
+  "forms": {
+    "exampleForm": "/internal/form/example-submit"
+  },
+  "triggers": {
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onCommentSubmit": "/internal/triggers/on-comment-submit",
+    "onCommentDelete": "/internal/triggers/on-comment-delete"
+  },
+  "scheduler": {
+    "tasks": {
+      "tally-hazards": {
+        "endpoint": "/internal/scheduler/tally-hazards",
+        "cron": "30 11 * * *"
+      },
+      "rotate-level": {
+        "endpoint": "/internal/scheduler/rotate-level",
+        "cron": "0 12 * * *"
+      }
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "dev": {
+    "subreddit": "chroma_canvas_dev"
+  }
+}

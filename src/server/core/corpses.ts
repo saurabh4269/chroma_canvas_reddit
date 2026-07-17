@@ -1,5 +1,9 @@
 import type { CorpseRecord } from '../../shared/level';
-import { CORPSE_CAP, REDIS } from '../../shared/constants';
+import {
+  CORPSE_CAP,
+  CORPSE_MIN_SPACING,
+  REDIS,
+} from '../../shared/constants';
 import { redis } from '@devvit/web/server';
 
 export const getCorpses = async (): Promise<CorpseRecord[]> => {
@@ -12,6 +16,20 @@ export const getCorpseCount = async (): Promise<number> => {
   return count ? parseInt(count, 10) : 0;
 };
 
+const tooClose = (
+  x: number,
+  y: number,
+  existing: CorpseRecord[]
+): boolean => {
+  const min2 = CORPSE_MIN_SPACING * CORPSE_MIN_SPACING;
+  for (const c of existing) {
+    const dx = c.x - x;
+    const dy = c.y - y;
+    if (dx * dx + dy * dy < min2) return true;
+  }
+  return false;
+};
+
 export const addCorpse = async (
   username: string,
   x: number,
@@ -20,6 +38,12 @@ export const addCorpse = async (
 ): Promise<{ accepted: boolean; count: number }> => {
   const card = await redis.zCard(REDIS.corpsesCurrent);
   if (card >= CORPSE_CAP) {
+    return { accepted: false, count: await getCorpseCount() };
+  }
+
+  const existing = await getCorpses();
+  // Count the death for stats, but skip stacking platforms on top of each other.
+  if (tooClose(x, y, existing)) {
     return { accepted: false, count: await getCorpseCount() };
   }
 

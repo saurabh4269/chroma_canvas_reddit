@@ -28,7 +28,8 @@ const TWISTS: DailyTwist[] = [
     name: 'Low Gravity',
     emoji: '🎈',
     desc: 'The canvas holds its breath — jumps float higher and longer.',
-    gravityY: 820,
+    // Slightly less floaty so mobile landings stay readable.
+    gravityY: 880,
     moveSpeed: 220,
     dusk: false,
   },
@@ -38,7 +39,8 @@ const TWISTS: DailyTwist[] = [
     emoji: '💨',
     desc: 'A wind at your back. Faster runs, braver mistakes.',
     gravityY: 1200,
-    moveSpeed: 268,
+    // Milder speed boost — fair on narrow touch pads.
+    moveSpeed: 252,
     dusk: false,
   },
   {

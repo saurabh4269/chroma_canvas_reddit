@@ -1,6 +1,7 @@
 import { Scene, GameObjects } from 'phaser';
 import * as Phaser from 'phaser';
 import type { InitResponse } from '../../shared/api';
+import { getSkin } from '../../shared/skins';
 import { getDailyTwist } from '../../shared/twist';
 import { reportJourneyStart } from '../journeys';
 import { fetchInit } from '../net/api';
@@ -31,6 +32,7 @@ export class MainMenu extends Scene {
   private pulseText!: GameObjects.Text;
   private twistText!: GameObjects.Text;
   private archiveBtn!: UiButton;
+  private skinsBtn!: UiButton;
   private cta!: UiButton;
   private hero!: GameObjects.Container;
   private footer!: GameObjects.Text;
@@ -82,7 +84,12 @@ export class MainMenu extends Scene {
     } else {
       heroSprite = this.add.image(0, 0, 'cc-player').setScale(1.6);
     }
-    const heroOrb = this.add.image(2, -44, 'cc-orb').setScale(0.75);
+    const initPreview = this.registry.get('init') as InitResponse | undefined;
+    const heroSkin = getSkin(initPreview?.player?.equippedSkin);
+    const heroOrb = this.add
+      .image(2, -44, 'cc-orb')
+      .setScale(0.75)
+      .setTint(heroSkin.orb);
     const heroShadow = this.add
       .image(0, 34, 'cc-shadow')
       .setDisplaySize(64, 12);
@@ -205,6 +212,19 @@ export class MainMenu extends Scene {
         this.scene.start('Archive');
       },
       144,
+      36
+    );
+
+    this.skinsBtn = addGameButton(
+      this,
+      0,
+      0,
+      '✦ Skins',
+      'ghost',
+      () => {
+        this.scene.start('Skins');
+      },
+      110,
       36
     );
 
@@ -361,6 +381,10 @@ export class MainMenu extends Scene {
         .setVisible(true)
         .setPosition(Math.min(92, width * 0.22), 28)
         .setScale(Math.min(s, 0.9));
+      this.skinsBtn.container
+        .setVisible(true)
+        .setPosition(Math.max(width - 72, width * 0.78), 28)
+        .setScale(Math.min(s, 0.9));
     } else {
       this.eyebrow.setPosition(width / 2, height * 0.238).setScale(s * 0.95);
       this.title.setPosition(width / 2, height * 0.29).setScale(s * 0.95);
@@ -375,6 +399,10 @@ export class MainMenu extends Scene {
       this.archiveBtn.container
         .setVisible(true)
         .setPosition(width - 92, 30)
+        .setScale(Math.min(s, 1));
+      this.skinsBtn.container
+        .setVisible(true)
+        .setPosition(92, 30)
         .setScale(Math.min(s, 1));
     }
     this.footer.setPosition(width / 2, height - 14).setScale(Math.min(s, 1));

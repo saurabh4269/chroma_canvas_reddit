@@ -1,8 +1,14 @@
 export const APP_NAME = 'chroma-canvas';
 
 export const CORPSE_CAP = 500;
+/** Min distance between corpse platforms so stacked deaths stay climbable. */
+export const CORPSE_MIN_SPACING = 36;
 export const CORPSE_PLATFORM_W = 48;
 export const CORPSE_PLATFORM_H = 12;
+/** Hot Redis archive window; older days live in Blob when available. */
+export const ARCHIVE_REDIS_DAYS = 7;
+/** Max days The Archive will try to surface (Redis + Blob). */
+export const ARCHIVE_LOOKBACK_DAYS = 30;
 
 export const LEVEL_WIDTH = 3200;
 export const LEVEL_HEIGHT = 600;

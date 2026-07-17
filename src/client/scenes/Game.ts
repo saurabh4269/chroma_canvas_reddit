@@ -15,6 +15,7 @@ import {
   reportJourneyProgress,
 } from '../journeys';
 import { COLORS, FONTS, HEX } from '../theme';
+import { getSkin } from '../../shared/skins';
 import { getDailyTwist, type DailyTwist } from '../../shared/twist';
 import { fillVerticalGradient } from '../ui/phaserUi';
 import { sfx } from '../ui/sfx';
@@ -66,10 +67,11 @@ export class Game extends Scene {
   airborneFromJump = false;
   journeyProgressSent = new Set<number>();
 
-  static readonly COYOTE_MS = 90;
-  static readonly JUMP_BUFFER_MS = 130;
-  static readonly JUMP_VELOCITY = -420;
-  static readonly JUMP_CUT_VELOCITY = -170;
+  // Slightly more forgiving on mobile: taller reach, longer buffer/coyote.
+  static readonly COYOTE_MS = 110;
+  static readonly JUMP_BUFFER_MS = 150;
+  static readonly JUMP_VELOCITY = -450;
+  static readonly JUMP_CUT_VELOCITY = -185;
 
   constructor() {
     super('Game');
@@ -715,6 +717,12 @@ export class Game extends Scene {
     this.playerBaseW = this.player.displayWidth;
     this.playerBaseH = this.player.displayHeight;
 
+    const initData = this.registry.get('init') as InitResponse | undefined;
+    const skin = getSkin(initData?.player?.equippedSkin);
+    if (skin.playerTint) {
+      this.player.setTint(skin.playerTint);
+    }
+
     // Run dust
     if (this.textures.exists('cc-dust')) {
       this.runDust = this.add
@@ -736,7 +744,8 @@ export class Game extends Scene {
     this.orb = this.add
       .image(this.level.spawn.x, this.level.spawn.y - 26, 'cc-orb')
       .setDisplaySize(24, 24)
-      .setDepth(11);
+      .setDepth(11)
+      .setTint(skin.orb);
     this.tweens.add({
       targets: this.orb,
       displayWidth: 27,
@@ -748,7 +757,7 @@ export class Game extends Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Faint sparkle trail behind the orb
+    // Faint sparkle trail behind the orb (skin-tinted, cosmetic only)
     if (this.textures.exists('cc-sparkle')) {
       this.orbTrail = this.add
         .particles(0, 0, 'cc-sparkle', {
@@ -758,7 +767,7 @@ export class Game extends Scene {
           speed: { min: 4, max: 14 },
           lifespan: 500,
           frequency: 160,
-          tint: [COLORS.orb, COLORS.orbGlow],
+          tint: skin.trail,
         })
         .setDepth(10);
     }

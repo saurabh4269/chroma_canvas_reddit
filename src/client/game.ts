@@ -6,6 +6,7 @@ import { MainMenu } from './scenes/MainMenu';
 import * as Phaser from 'phaser';
 import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
+import { Skins } from './scenes/Skins';
 import { UIScene } from './scenes/UIScene';
 
 const isCaptureMode =
@@ -28,7 +29,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [Boot, Preloader, MainMenu, MainGame, UIScene, GameOver, Archive],
+  scene: [Boot, Preloader, MainMenu, MainGame, UIScene, GameOver, Archive, Skins],
 };
 
 const StartGame = (parent: string) => {

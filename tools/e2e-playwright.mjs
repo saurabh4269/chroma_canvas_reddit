@@ -104,17 +104,27 @@ try {
   const early = await page.evaluate(() => {
     const s = window.__CHROMA_GAME__.scene.keys.Game;
     const ui = window.__CHROMA_GAME__.scene.keys.UIScene;
+    // Phaser may wrap the scene class; walk the prototype chain for statics.
+    let coyote;
+    let proto = s?.constructor;
+    for (let i = 0; i < 5 && proto; i++) {
+      if (typeof proto.COYOTE_MS === 'number') {
+        coyote = proto.COYOTE_MS;
+        break;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
     return {
       orb: Boolean(s?.carryingOrb && s?.orb?.visible),
       ui: Boolean(ui?.sys?.isActive?.()),
       corpses: s?.corpses?.length ?? 0,
-      coyote: s?.constructor?.COYOTE_MS,
+      coyote,
     };
   });
   assert(early.orb, 'Orb carried at spawn');
   assert(early.ui, 'UIScene HUD active');
   assert(early.corpses >= 1, 'Live corpses loaded');
-  assert(early.coyote === 90, 'Coyote time configured');
+  assert(early.coyote === 110, 'Coyote time configured');
 
   await page.evaluate(() => {
     window.__CHROMA_GAME__.scene.keys.Game.setTouchInput?.(false, true, true);

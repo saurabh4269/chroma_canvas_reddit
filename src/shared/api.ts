@@ -104,6 +104,46 @@ export type StatsResponse = {
   player: PlayerStats;
 };
 
+export type SkinCatalogItem = {
+  id: string;
+  name: string;
+  desc: string;
+  unlocked: boolean;
+  equipped: boolean;
+  unlock:
+    | { kind: 'free' }
+    | { kind: 'wins'; count: number }
+    | { kind: 'purchase'; sku: string; priceGold: number };
+  preview: { orb: number; orbDeep: number; orbGlow: number };
+};
+
+export type SkinsResponse = {
+  type: 'skins';
+  equippedSkin: string;
+  unlockedSkins: string[];
+  catalog: SkinCatalogItem[];
+  /** True when gold checkout may be unavailable; clients can offer claim-demo. */
+  paymentsAvailable: boolean;
+};
+
+export type EquipSkinRequest = {
+  skinId: string;
+};
+
+export type EquipSkinResponse = {
+  type: 'equip-skin';
+  ok: boolean;
+  equippedSkin: string;
+  unlockedSkins: string[];
+  message?: string;
+};
+
+export type ClaimDemoSkinsResponse = {
+  type: 'claim-demo-skins';
+  unlockedSkins: string[];
+  message: string;
+};
+
 export type ErrorResponse = {
   status: 'error';
   message: string;

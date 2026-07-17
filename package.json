@@ -2,6 +2,7 @@
   "private": true,
   "name": "chroma-canvas",
   "version": "0.0.0",
+  "description": "Daily community precision platformer: carry the Chroma Orb, petrify into platforms on death, and shape tomorrow’s level with !hazard comments.",
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {

@@ -20,8 +20,8 @@ export const Demo = () => {
         volume={(frame) =>
           interpolate(
             frame,
-            [0, 28, TOTAL_FRAMES - 55, TOTAL_FRAMES - 1],
-            [0, 0.4, 0.4, 0],
+            [0, 20, TOTAL_FRAMES - 55, TOTAL_FRAMES - 1],
+            [0, 0.72, 0.72, 0],
             {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
           )
         }

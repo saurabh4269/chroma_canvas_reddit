@@ -37,6 +37,19 @@ Legacy still-only capture remains as `npm run capture` → `capture_screens.mjs`
 
 No Reddit login or credentials are required or stored.
 
+## Audio
+
+Original sunny-arcade score (no copyrighted music), generated locally:
+
+```bash
+python3 generate_score.py public/audio/score.wav --duration 54 --bpm 128
+# or via asset prep (preferred):
+npm run assets
+```
+
+`prepare_assets.py` syncs score length and scene-hit stingers to `src/storyboard.ts`.
+Wired in Remotion via `@remotion/media` `<Audio>` with boundary fades.
+
 ## Output
 
 - **Canonical video:** `demo_build/demo.mp4`

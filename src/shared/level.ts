@@ -51,6 +51,12 @@ export type ArchiveEntry = {
   corpses: Array<{ x: number; y: number }>;
   corpseCount: number;
   live?: boolean;
+  /** Daily twist id derived from seed (cosmetic label). */
+  twistId?: string;
+  /** Hazard count at archive time. */
+  hazardCount?: number;
+  /** Where the snapshot was loaded from. */
+  source?: 'redis' | 'blob' | 'live';
 };
 
 export type CorpseRecord = {
@@ -69,6 +75,10 @@ export type PlayerStats = {
   totalDeaths: number;
   bestTimeMs: number;
   flairTier: string;
+  /** Equipped cosmetic skin id (orb/trail only). */
+  equippedSkin: string;
+  /** Unlocked cosmetic skin ids (includes free defaults). */
+  unlockedSkins: string[];
 };
 
 export type LeaderboardEntry = {

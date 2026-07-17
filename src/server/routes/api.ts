@@ -1,23 +1,32 @@
 import { Hono } from 'hono';
 import { context, realtime, redis, reddit } from '@devvit/web/server';
 import type {
+  ClaimDemoSkinsResponse,
   CommentActionResponse,
   CommentHazardRequest,
   CorpsesResponse,
   DeathRequest,
   DeathResponse,
+  EquipSkinRequest,
+  EquipSkinResponse,
   ErrorResponse,
   HistoryResponse,
   InitResponse,
   LeaderboardResponse,
   LevelResponse,
   LiveEvent,
+  SkinsResponse,
   StatsResponse,
   SubscribeResponse,
   WinRequest,
   WinResponse,
 } from '../../shared/api';
-import { HAZARD_TYPES, subsKey } from '../../shared/constants';
+import {
+  ARCHIVE_LOOKBACK_DAYS,
+  HAZARD_TYPES,
+  subsKey,
+} from '../../shared/constants';
+import { getDailyTwist } from '../../shared/twist';
 import { addCorpse, getCorpseCount, getCorpses } from '../core/corpses';
 import { getPendingHazards } from '../core/hazardComments';
 import {
@@ -40,6 +49,12 @@ import {
 } from '../core/leaderboard';
 import { applyFlair, getPlayerStats, recordDeath, recordWin } from '../core/players';
 import { getActivePostId } from '../core/post';
+import {
+  catalogForClient,
+  claimDemoSkins,
+  equipSkin,
+  getPlayerSkinState,
+} from '../core/skins';
 
 export const api = new Hono();
 
@@ -213,12 +228,12 @@ api.post('/win', async (c) => {
   });
 });
 
-/** The Archive: today (live) + the last 7 completed days. */
+/** The Archive: today (live) + recent Redis days + older Blob days. */
 api.get('/history', async (c) => {
   const [level, corpses, past] = await Promise.all([
     ensureCurrentLevel(),
     getCorpses(),
-    getLevelHistory(7),
+    getLevelHistory(ARCHIVE_LOOKBACK_DAYS),
   ]);
   const today: HistoryResponse['entries'][number] = {
     date: level.date,
@@ -230,8 +245,51 @@ api.get('/history', async (c) => {
     corpses: corpses.map((cp) => ({ x: cp.x, y: cp.y })),
     corpseCount: corpses.length,
     live: true,
+    twistId: getDailyTwist(level.seed).id,
+    hazardCount: level.hazards.length,
+    source: 'live',
   };
   return c.json<HistoryResponse>({ type: 'history', entries: [today, ...past] });
+});
+
+api.get('/skins', async (c) => {
+  const username = (await reddit.getCurrentUsername()) ?? 'anonymous';
+  const { equippedSkin, unlockedSkins } = await getPlayerSkinState(username);
+  return c.json<SkinsResponse>({
+    type: 'skins',
+    equippedSkin,
+    unlockedSkins,
+    catalog: catalogForClient(unlockedSkins, equippedSkin),
+    // Gold checkout requires Reddit Payments eligibility; clients fall back to claim-demo.
+    paymentsAvailable: true,
+  });
+});
+
+api.post('/skins/equip', async (c) => {
+  const username = (await reddit.getCurrentUsername()) ?? 'anonymous';
+  const body = await c.req.json<EquipSkinRequest>();
+  const result = await equipSkin(username, body.skinId ?? '');
+  return c.json<EquipSkinResponse>({
+    type: 'equip-skin',
+    ok: result.ok,
+    equippedSkin: result.equippedSkin,
+    unlockedSkins: result.unlockedSkins,
+    message: result.ok ? 'Equipped!' : 'Skin locked — unlock first.',
+  });
+});
+
+/**
+ * Free unlock path for judges / playtest when gold Payments is gated.
+ * Unlocks purchase-tier cosmetics without gameplay advantage.
+ */
+api.post('/skins/claim-demo', async (c) => {
+  const username = (await reddit.getCurrentUsername()) ?? 'anonymous';
+  const unlockedSkins = await claimDemoSkins(username);
+  return c.json<ClaimDemoSkinsResponse>({
+    type: 'claim-demo-skins',
+    unlockedSkins,
+    message: 'Cosmetics unlocked for playtest. Cosmetic only — no gameplay boost.',
+  });
 });
 
 api.get('/leaderboard', async (c) => {

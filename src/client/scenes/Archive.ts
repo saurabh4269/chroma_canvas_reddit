@@ -62,7 +62,7 @@ export class Archive extends Scene {
       const res = await fetchHistory();
       if (!this.scene.isActive()) return;
       this.status.setVisible(false);
-      this.renderEntries(res.entries.slice(0, 5));
+      this.renderEntries(res.entries.slice(0, 8));
     } catch {
       this.status.setText('The archive is still being written.\nCome back after the first rotation.');
     }

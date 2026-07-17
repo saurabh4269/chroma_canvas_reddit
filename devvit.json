@@ -21,12 +21,45 @@
     "journeys": true,
     "realtime": true,
     "redis": true,
+    "payments": true,
     "reddit": {
       "enable": true,
       "asUser": [
         "SUBMIT_COMMENT",
         "SUBSCRIBE_TO_SUBREDDIT"
       ]
+    }
+  },
+  "payments": {
+    "products": [
+      {
+        "sku": "skin_ember",
+        "displayName": "Ember Trail",
+        "description": "Cosmetic coral orb trail. No gameplay advantage.",
+        "price": 25,
+        "accountingType": "DURABLE",
+        "metadata": { "kind": "cosmetic_skin", "skinId": "ember" }
+      },
+      {
+        "sku": "skin_frost",
+        "displayName": "Frost Trail",
+        "description": "Cosmetic sky-blue orb trail. No gameplay advantage.",
+        "price": 25,
+        "accountingType": "DURABLE",
+        "metadata": { "kind": "cosmetic_skin", "skinId": "frost" }
+      },
+      {
+        "sku": "skin_midnight",
+        "displayName": "Midnight Ink",
+        "description": "Cosmetic navy orb with cream glow. No gameplay advantage.",
+        "price": 50,
+        "accountingType": "DURABLE",
+        "metadata": { "kind": "cosmetic_skin", "skinId": "midnight" }
+      }
+    ],
+    "endpoints": {
+      "fulfillOrder": "/internal/payments/fulfill",
+      "refundOrder": "/internal/payments/refund"
     }
   },
   "menu": {

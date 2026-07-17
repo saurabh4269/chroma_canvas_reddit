@@ -1,7 +1,9 @@
 import type { PlayerStats } from '../../shared/level';
 import { FLAIR_TIERS, playerKey } from '../../shared/constants';
+import { DEFAULT_SKIN_ID } from '../../shared/skins';
 import { context, reddit, redis } from '@devvit/web/server';
 import { todayUtc } from './level';
+import { getPlayerSkinState } from './skins';
 
 const defaultStats = (): PlayerStats => ({
   streak: 0,
@@ -10,6 +12,8 @@ const defaultStats = (): PlayerStats => ({
   totalDeaths: 0,
   bestTimeMs: 0,
   flairTier: 'Newcomer',
+  equippedSkin: DEFAULT_SKIN_ID,
+  unlockedSkins: [DEFAULT_SKIN_ID, 'solar'],
 });
 
 export const computeFlairTier = (wins: number, streak: number): string => {
@@ -27,13 +31,17 @@ export const getPlayerStats = async (username: string): Promise<PlayerStats> => 
   if (!data || Object.keys(data).length === 0) {
     return defaultStats();
   }
+  const totalWins = parseInt(data.totalWins ?? '0', 10);
+  const skins = await getPlayerSkinState(username, { totalWins });
   return {
     streak: parseInt(data.streak ?? '0', 10),
     lastPlayedDate: data.lastPlayedDate ?? '',
-    totalWins: parseInt(data.totalWins ?? '0', 10),
+    totalWins,
     totalDeaths: parseInt(data.totalDeaths ?? '0', 10),
     bestTimeMs: parseInt(data.bestTimeMs ?? '0', 10),
     flairTier: data.flairTier ?? 'Newcomer',
+    equippedSkin: skins.equippedSkin,
+    unlockedSkins: skins.unlockedSkins,
   };
 };
 

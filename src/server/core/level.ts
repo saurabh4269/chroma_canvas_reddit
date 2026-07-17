@@ -11,6 +11,13 @@ import {
   REDIS,
 } from '../../shared/constants';
 import { redis } from '@devvit/web/server';
+import { ARCHIVE_LOOKBACK_DAYS, ARCHIVE_REDIS_DAYS } from '../../shared/constants';
+import { getDailyTwist } from '../../shared/twist';
+import {
+  pruneRedisArchivesOlderThan,
+  readBlobArchive,
+  writeBlobArchive,
+} from './blobArchive';
 import { computeBlessing, getDailyPulse } from './pulse';
 
 export const todayUtc = (): string => new Date().toISOString().slice(0, 10);
@@ -72,9 +79,20 @@ export const generateLevel = (
   const steps = 18 + Math.floor(seq / 3);
 
   for (let i = 0; i < steps; i++) {
-    const w = 70 + Math.floor(rand() * 50);
-    const gap = 50 + Math.floor(rand() * (30 + seq * 2));
-    const rise = rand() > 0.45 ? 40 + Math.floor(rand() * 50) : -20 - Math.floor(rand() * 30);
+    // Early-run mercy: wider ledges, shorter gaps, gentler rises for the first climb.
+    const early = i < 5;
+    const w = early
+      ? 88 + Math.floor(rand() * 48)
+      : 72 + Math.floor(rand() * 48);
+    const gapSpread = early
+      ? 20 + Math.floor(seq * 0.6)
+      : 24 + Math.floor(seq * 1.4);
+    const gap = 42 + Math.floor(rand() * Math.max(12, gapSpread));
+    const upCap = early ? 32 : 44;
+    const rise =
+      rand() > 0.45
+        ? 26 + Math.floor(rand() * upCap)
+        : -14 - Math.floor(rand() * 22);
     x += gap;
     y = clamp(y - rise, 120, groundY - 40);
     platforms.push({ x, y, w, h: PLATFORM_H });
@@ -106,12 +124,14 @@ export const generateLevel = (
   const proceduralHazards: HazardSpec[] = [];
   // Yesterday's fate tilts today's danger
   const blessingDelta =
-    opts.blessing === 'mercy' ? -0.08 : opts.blessing === 'cruel' ? 0.12 : 0;
+    opts.blessing === 'mercy' ? -0.08 : opts.blessing === 'cruel' ? 0.1 : 0;
+  // Slightly lower base density; early platforms stay clear for mobile learning.
   const hazardChance = Math.max(
-    0.1,
-    Math.min(0.6, 0.25 + seq * 0.015 + blessingDelta)
+    0.08,
+    Math.min(0.52, 0.18 + seq * 0.012 + blessingDelta)
   );
   for (let i = 2; i < platforms.length - 1; i++) {
+    if (i < 5) continue;
     if (rand() < hazardChance) {
       const p = platforms[i]!;
       const roll = rand();
@@ -208,11 +228,13 @@ export const rotateLevel = async (): Promise<LevelDef> => {
   const corpseMembers = await redis.zRange(REDIS.corpsesCurrent, 0, -1);
 
   if (oldLevelRaw) {
-    const archive = {
-      level: JSON.parse(oldLevelRaw) as LevelDef,
-      corpses: corpseMembers.map((c) => JSON.parse(c.member)),
-    };
+    const oldLevel = JSON.parse(oldLevelRaw) as LevelDef;
+    const corpses = corpseMembers.map((c) => JSON.parse(c.member) as { x: number; y: number });
+    const archive = { level: oldLevel, corpses };
     await redis.set(levelHistoryKey(oldDate), JSON.stringify(archive));
+    // Durable Blob snapshot (fails soft if beta Blob unavailable).
+    await writeBlobArchive(oldDate, oldLevel, corpses);
+    await pruneRedisArchivesOlderThan(ARCHIVE_REDIS_DAYS);
   }
 
   await redis.del(REDIS.corpsesCurrent);
@@ -242,8 +264,29 @@ export const rotateLevel = async (): Promise<LevelDef> => {
   return level;
 };
 
-/** Last N archived days (newest first) for The Archive gallery. */
-export const getLevelHistory = async (days = 7): Promise<ArchiveEntry[]> => {
+const toArchiveEntry = (
+  date: string,
+  level: LevelDef,
+  corpses: Array<{ x: number; y: number }>,
+  source: 'redis' | 'blob'
+): ArchiveEntry => ({
+  date,
+  seq: level.seq,
+  width: level.width,
+  height: level.height,
+  platforms: level.platforms,
+  exit: level.exit,
+  corpses: corpses.map((c) => ({ x: c.x, y: c.y })),
+  corpseCount: corpses.length,
+  twistId: getDailyTwist(level.seed).id,
+  hazardCount: level.hazards.length,
+  source,
+});
+
+/** Archived days (newest first): Redis hot path, Blob fallback for older days. */
+export const getLevelHistory = async (
+  days = ARCHIVE_LOOKBACK_DAYS
+): Promise<ArchiveEntry[]> => {
   const entries: ArchiveEntry[] = [];
   const now = new Date();
   for (let i = 1; i <= days; i++) {
@@ -251,24 +294,23 @@ export const getLevelHistory = async (days = 7): Promise<ArchiveEntry[]> => {
     d.setUTCDate(d.getUTCDate() - i);
     const date = d.toISOString().slice(0, 10);
     const raw = await redis.get(levelHistoryKey(date));
-    if (!raw) continue;
-    try {
-      const archive = JSON.parse(raw) as {
-        level: LevelDef;
-        corpses: Array<{ x: number; y: number }>;
-      };
-      entries.push({
-        date,
-        seq: archive.level.seq,
-        width: archive.level.width,
-        height: archive.level.height,
-        platforms: archive.level.platforms,
-        exit: archive.level.exit,
-        corpses: archive.corpses.map((c) => ({ x: c.x, y: c.y })),
-        corpseCount: archive.corpses.length,
-      });
-    } catch {
-      // Skip malformed archives
+    if (raw) {
+      try {
+        const archive = JSON.parse(raw) as {
+          level: LevelDef;
+          corpses: Array<{ x: number; y: number }>;
+        };
+        entries.push(toArchiveEntry(date, archive.level, archive.corpses, 'redis'));
+        continue;
+      } catch {
+        // fall through to blob
+      }
+    }
+    const fromBlob = await readBlobArchive(date);
+    if (fromBlob) {
+      entries.push(
+        toArchiveEntry(date, fromBlob.level, fromBlob.corpses, 'blob')
+      );
     }
   }
   return entries;
@@ -280,5 +322,6 @@ export const isWithinBounds = (
   y: number
 ): boolean => x >= 0 && x <= level.width && y >= 0 && y <= level.height;
 
+/** Anti-cheat floor: still ≥8s early, grows gently with sequence. */
 export const minWinTimeMs = (seq: number): number =>
-  Math.max(8000, 6000 + seq * 200);
+  Math.max(8000, 5500 + seq * 180);

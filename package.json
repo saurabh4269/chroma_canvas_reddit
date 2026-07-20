@@ -22,12 +22,12 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.931.0",
-    "@devvit/analytics": "0.13.7",
-    "@devvit/blob": "^0.13.7",
-    "@devvit/start": "0.13.7",
-    "@devvit/web": "0.13.7",
+    "@devvit/analytics": "0.13.9",
+    "@devvit/blob": "^0.13.9",
+    "@devvit/start": "0.13.9",
+    "@devvit/web": "0.13.9",
     "@hono/node-server": "2.0.8",
-    "devvit": "0.13.7",
+    "devvit": "0.13.9",
     "hono": "4.12.28",
     "phaser": "4.2.0"
   },
